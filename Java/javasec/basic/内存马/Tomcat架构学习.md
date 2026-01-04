@@ -17,30 +17,32 @@ Java Servlet 是运行在 Web 服务器或应用服务器上的程序，它是�
 把整个过程这样来看会清晰很多
 
 ## 处理请求的过程
-客户端发起一个http请求，比如 get 类型。
+整个过程大致可以分为三个阶段
+1. 建立连接
+2. 容器内部流转
+3. 业务逻辑处理
 
-Servlet 容器接收到请求，根据请求信息，封装成 HttpServletRequest 和HttpServletResponse 对象。这步也就是我们的传参。
+ 一、建立连接：
+ 用户输入url后先到达tomcat的 `Connector`的组件，他会负责读取原始的二进制数据流，并将其解析成 HTTP 协议格式。
+Connector 会创建两个关键对象：`HttpServletRequest`（装请求数据）和 `HttpServletResponse`（准备装返回数据）。
 
-Servlet容器调用 HttpServlet 的 init() 方法，init 方法只在第一次请求的时候被调用。
+二、进入Tomcat的流程：
+Connector 拿到请求后，会把它交给 **Engine（引擎）**，然后一级一级往下找
+- **Engine (引擎)**：Tomcat 的最高层，负责寻找匹配的 **Host（虚拟主机）**。
+- **Host (主机)**：比如 `localhost`。它负责寻找具体的 **Context（Web 应用）**。
+- **Context (应用)**：比如 `/order`。这就是你的具体项目了。在这里，Tomcat 会根据 `web.xml` 或注解寻找匹配的 **Wrapper（Servlet 包装器）**。
 
-Servlet 容器调用 service() 方法。
+三、进入Web 三大件和业务层
+在这一步基本上 Listener 已经工作完了。例如，当 Context 应用启动时，`ContextLoaderListener` 就已经把 Spring 容器初始化好了
 
-service() 方法根据请求类型，这里是get类型，分别调用doGet或者doPost方法，这里调用doGet方法。
+然后经过Filter 检查登陆呀，编码统一，检查是否有非法请求之类的一套流程，最后进入 `Servlet`
 
-doXXX 方法中是我们自己写的业务逻辑。
-
-业务逻辑处理完成之后，返回给 Servlet 容器，然后容器将结果返回给客户端。
-
-容器关闭时候，会调用 destory 方法。
-
-
-
-
-
-
-
-
-
+然后开始调用业务逻辑 让DAO与数据库交互。
+最后再原路层层返回
+Servlet 把处理好的数据（比如 JSON 或 HTML）塞进 `HttpServletResponse` 对象里。
+请求走完 Servlet 以后，还会**反向**经过一遍 Filter
+Connector 把 `Response` 对象里的内容包装成 HTTP 报文格式，通过 Socket 发送给浏览器。
+浏览器再渲染
 
 
 
