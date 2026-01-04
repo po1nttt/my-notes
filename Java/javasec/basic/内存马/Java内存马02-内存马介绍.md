@@ -247,7 +247,7 @@ Server (整个 Tomcat 服务器)
       │
       └── (C) StandardWrapper (实现 Wrapper 接口)
 ```
-
+![](picture/Pasted%20image%2020260104230418.png)
 
 
 
