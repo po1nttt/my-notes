@@ -118,20 +118,75 @@ Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护�
 # Tomcat架构原理
 Tomcat 的框架如下图所示，主要有 server、service、connector、container 四个部分
 ![](picture/Pasted%20image%2020260104210749.png)
- `server`：就是Tomcat本体，它要能够提供一个接口让其它程序能够访问到这个 Service 集合、同时要维护它所包含的所有 Service 的生命周期，包括如何初始化、如何结束服务、如何找到别人要访问的 Service。
+
+
+## Server
+ 就是Tomcat本体，它要能够提供一个接口让其它程序能够访问到这个 Service 集合、同时要维护它所包含的所有 Service 的生命周期，包括如何初始化、如何结束服务、如何找到别人要访问的 Service。
 一个 Server 可以包含多个 Service。
 
-`Service` ：是一个逻辑组合。它的核心作用是将“接收请求”的组件和“处理请求”的组件绑定在一起，同时会初始化它下面的其它组件，在 Connector 和 Container 外面多包一层，把它们组装在一起，向外面提供服务，一个 Service 可以设置多个 Connector，但是只能有一个 Container 容器
+## Service 
+是一个逻辑组合。它的核心作用是将“接收请求”的组件和“处理请求”的组件绑定在一起，同时会初始化它下面的其它组件，在 Connector 和 Container 外面多包一层，把它们组装在一起，向外面提供服务，一个 Service 可以设置多个 Connector，但是只能有一个 Container 容器
 Tomcat 中 Service 接口的标准实现类是 StandardService ，它不仅实现了 Service 借口同时还实现了 Lifecycle 接口，这样它就可以控制它下面的组件的生命周期了
 
 
 在每个 Service 内部，有Connector（连接器）和Container（容器）
 
 
-`Connector`：负责监听端口（如 8080），接收 Socket 连接，将原始的字节流解析成 `HttpServletRequest` 对象。
+## Connector
+负责监听端口（如 8080），接收 Socket 连接，将原始的字节流解析成  Request 和 Response 对象分别用于和请求端交换数据，然后会产生一个线程来处理这个请求并把产生的 Request 和 Response 对象传给处理这个请求的线程，处理这个请求的线程就是 Container 组件要做的事了。
+根据运行的逻辑图，我们也能看到连接器 connector 主要有三个功能：
+> socket 通信
+> 解析处理应用层协议，如将 socket 连接封装成 request 和 response 对象，后续交给 Container 来处理  
+将 Request 转换为 ServletRequest，将 Response 转换为 ServletResponse
+其中 Tomcat 设计了三个组件，其负责功能如下：
 
-`Container`：负责处理业务逻辑。它里面运行的就是 Servlet。由 Servlet 具体负责处理 Request 请求，对应下图中的 servlet 容器。
+- EndPoint: 负责网络通信，将字节流传递给 Processor；
+- Processor: 负责处理字节流生成 Tomcat Request 对象，将 Tomcat Request 对象传递给 Adapter；
+- Adapter: 负责将 Tomcat Request 对象转化成 ServletRequest 对象，传递给容器。****
+
+
+## Adapter组件
+由于协议的不同，Tomcat 定义了自己的 Request 类来存放请求信息，但是这个不是标准的 ServletRequest。于是需要使用 Adapter 将 Tomcat Request 对象转成 ServletRequest 对象，然后就能调用容器的 service 方法。
+
+简而言之，Endpoint 接收到 Socket 连接后，生成一个 SocketProcessor 任务提交到线程池进行处理，SocketProcessor 的 run 方法将调用 Processor 组件进行应用层协议的解析，Processor 解析后生成 Tomcat Request 对象，然后会调用 Adapter 的 Service 方法，方法内部通过如下代码将 Request 请求传递到容器中。
+```java
+connector.getService().getContainer().getPipeline().getFirst().invoke(request, response);
+```
+一个总的 Tomcat Connector 功能如图所示
+![](picture/Pasted%20image%2020260104212038.png)
+## `Container`
+负责处理业务逻辑。它里面运行的就是 Servlet。由 Servlet 具体负责处理 Request 请求，对应下图中的 servlet 容器。
 ![](picture/Pasted%20image%2020260104211221.png)
+
+Container（又名Catalina）用于处理Connector发过来的servlet连接请求，它是容器的父接口，所有子容器都必须实现这个接口，Container 容器的设计用的是典型的责任链的设计模式，它有四个子容器组件构成，分别是：Engine、Host、Context、Wrapper，这四个组件不是平行的，而是父子关系，Engine 包含 Host，Host 包含 Context，Context 包含 Wrapper。
+
+- Engine: 最顶层容器组件，可以包含多个 Host。实现类为 `org.apache.catalina.core.StandardEngine`
+- Host: 代表一个虚拟主机，每个虚拟主机和某个域名 Domain Name 相匹配，可以包含多个 Context。实现类为 `org.apache.catalina.core.StandardHost`
+- Context: 一个 Context 对应于一个 Web 应用，可以包含多个 Wrapper。实现类为 `org.apache.catalina.core.StandardContext`
+- Wrapper: 一个 Wrapper 对应一个 Servlet。负责管理 Servlet ，包括 Servlet 的装载、初始化、执行以及资源回收。实现类为 `org.apache.catalina.core.StandardWrapper`
+
+通常一个 Servlet class 对应一个 Wrapper，如果有多个 Servlet 就可以定义多个 Wrapper，如果有多个 Wrapper 就要定义一个更高的 Container。
+
+例如，a.com和b.com分别对应两个Host
+![](picture/Pasted%20image%2020260104212228.png)
+每一个 Context 都有唯一的 路由。这里的 路由 不是指 servlet 绑定的 WebServlet 地址，而是指独立的一个 Web 应用地址。就好比 Tomat 默认的 根路由 `/` 和 `/manager` 就是两个不同的 web 应用，所以对应两个不同的 Context。要添加 Context 需要在 server.xml 中配置 docbase。
+
+如下图所示， 在一个 web 应用中创建了 2 个 servlet 服务，WebServlet 地址分别是 /Demo1 和 /Demo2 。 因为它们属于同一个 Web 应用所以 Context 一样，但访问地址不一样所以 Wrapper 不一样。 /manager 访问的 Web 应用是 Tomcat 默认的管理页面，是另外一个独立的 web 应用， 所以 Context 与前两个不一样。
+![](picture/Pasted%20image%2020260104212444.png)
+# Tomcat的类加载机制
+由于Tomcat中有多个WebApp  同时要确保之间相互隔离，所以Tomcat的类加载机制也不是传统的双亲委派
+
+Tomcat 自定义的类加载器 WebAppClassloader 为了确保隔离多个 WebApp 之间相互隔离，所以打破了双亲委托机制。每个 WebApp 用一个独有的 ClassLoader 实例来优先处理加载。它首先尝试自己加载某个类，如果找不到再交给父类加载器，其目的是优先加载 WEB 应用自己定义的类。
+
+同时为了防止 WEB 应用自己的类覆盖 JRE 的核心类，在本地 WEB 应用目录下查找之前，先使用 ExtClassLoader（使用双亲委托机制）去加载，这样既打破了双亲委托，同时也能安全加载类。
+
+
+
+
+
+
+
+
 
 
 
