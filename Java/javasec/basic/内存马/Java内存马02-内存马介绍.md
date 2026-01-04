@@ -223,6 +223,30 @@ Tomcat 把自己的结构分成了四级：Engine（经理）、Host（组长）
 里面有一个web应用在Tomcat内存里的全部东西，所有的 Filter、所有的 Servlet 实例、配置信息）全部存在这个 `StandardContext` 对象里。
 
 
+```
+Server (整个 Tomcat 服务器)
+└── Service (服务：将 Connector 和 Engine 组合在一起)
+    ├── Connector (连接器：监听端口，负责 HTTP 协议解析，外交官)
+    └── Engine (引擎：管理虚拟主机，Servlet 引擎核心)
+        └── Host (虚拟主机：例如 localhost，对应域名)
+            └── Context (Web 应用：对应你的项目)
+                └── Wrapper (包装器：对应具体的 Servlet)
+```
+```
+(I) Container [顶层容器接口：定义了所有容器的共性]
+ └── (C) ContainerBase [抽象基类：实现了大部分容器管理逻辑]
+      │
+      ├── (C) StandardEngine (实现 Engine 接口)
+      │
+      ├── (C) StandardHost (实现 Host 接口)
+      │
+      ├── (C) StandardContext (实现 Context 接口) ⭐
+      │    │
+      │    └── [内部关联] (C) ApplicationContext 
+      │                   └── [公开接口] (I) ServletContext
+      │
+      └── (C) StandardWrapper (实现 Wrapper 接口)
+```
 
 
 
