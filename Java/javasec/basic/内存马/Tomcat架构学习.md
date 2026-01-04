@@ -74,6 +74,8 @@ filter 也称之为过滤器，是对 Servlet 技术的一个强补充，其主�
 
 6、如果在 Filter.doFilter 方法中没有调用 FilterChain.doFilter 方法，则目标 Servlet 的 service 方法不会被执行，这样通过 Filter 就可以阻止某些非法的访问请求。
 
+7、
+
 
 
 
