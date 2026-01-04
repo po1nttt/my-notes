@@ -211,15 +211,16 @@ public interface ServletContext {
 
 ## ApplicationContext
 `org.apache.catalina.core.ApplicationContext` ，它是 Tomcat 内部用来直接实现 `ServletContext` 接口的一个类。它是 `StandardContext` 的一个**外观（Facade）**。Tomcat 不想让你直接操作最底层的 `StandardContext`，所以套了一个 `ApplicationContext` 给你用。只暴露你想用的功能（比如 `getAttribute`）
-## StandardContext
-这是核心实现类，是 `ApplicationContext`这个门面去除封装后的真正实现类
-里面有一个web应用在Tomcat内存里的全部东西，所有的 Filter、所有的 Servlet 实例、配置信息）全部存在这个 `StandardContext` 对象里。
 ## Context
 这是 Tomcat 内部定义的一个接口
 Tomcat 把自己的结构分成了四级：Engine（经理）、Host（组长）、**Context（员工）**、Wrapper（实习生）。
 `StandardContext` 就是那个担任了“Context （员工）”职位的具体的人。它实现了 `Context` 接口。
 
 在一次request请求发生时，背景，也就是context会记录当时的情形：当前WEB容器中有几个filter，有什么servlet，有什么listener，请求的参数，请求的路径，有没有什么全局的参数等等。
+
+## StandardContext
+这是对  `Context`的 核心实现类，是 `ApplicationContext`这个门面去除封装后的真正实现类
+里面有一个web应用在Tomcat内存里的全部东西，所有的 Filter、所有的 Servlet 实例、配置信息）全部存在这个 `StandardContext` 对象里。
 
 
 
