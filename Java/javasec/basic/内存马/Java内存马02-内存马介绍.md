@@ -116,12 +116,12 @@ context是上下文的意思，在java中经常能看到这个东西。那么到
 在WEB请求中也如此，在一次request请求发生时，背景，也就是context会记录当时的情形：当前WEB容器中有几个filter，有什么servlet，有什么listener，请求的参数，请求的路径，有没有什么全局的参数等等。
 
 ## ServletContext
-ServletContext是Servlet规范中规定的ServletContext接口，一般servlet都要实现这个接口。
+简单来说，**`ServletContext` 就是整个 Web 应用的“共享大仓库”和“运行环境上下文”**。
 
-大概就是规定了如果要实现一个WEB容器，他的Context里面要有这些东西：获取路径，获取参数，获取当前的filter，获取当前的servlet等
-
-
-
+如果把 **Servlet** 比作公司里的**员工**（负责具体干活），那么 **`ServletContext`** 就是**公司的行政部**：
+- **全应用共享**：公司里只有一个行政部，所有员工（Servlet）共享同一个行政部。
+- **资源中心**：你想查公司的地址（获取路径）、想领公章（获取参数）、想看公司的规章制度（获取 Filter/Servlet 列表），都要去找行政部。
+- **信息中转**：员工 A 给行政部留了个话，员工 B 下午去行政部就能听到（数据共享）
 
 
 
