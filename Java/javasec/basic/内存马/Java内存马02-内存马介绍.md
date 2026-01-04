@@ -116,6 +116,7 @@ context是上下文的意思，在java中经常能看到这个东西。那么到
 在WEB请求中也如此，在一次request请求发生时，背景，也就是context会记录当时的情形：当前WEB容器中有几个filter，有什么servlet，有什么listener，请求的参数，请求的路径，有没有什么全局的参数等等。
 
 ## ServletContext
+这是一个接口，用来作为Context的规范
 简单来说，**`ServletContext` 就是整个 Web 应用的“共享大仓库”和“运行环境上下文”**。
 
 如果把 **Servlet** 比作公司里的**员工**（负责具体干活），那么 **`ServletContext`** 就是**公司的行政部**：
@@ -123,8 +124,101 @@ context是上下文的意思，在java中经常能看到这个东西。那么到
 - **资源中心**：你想查公司的地址（获取路径）、想领公章（获取参数）、想看公司的规章制度（获取 Filter/Servlet 列表），都要去找行政部。
 - **信息中转**：员工 A 给行政部留了个话，员工 B 下午去行政部就能听到（数据共享）
 
-
-
+Servlet 规范规定了一个 Web 容器（如 Tomcat）的 Context 必须提供这些能力：
+```java
+package javax.servlet;
+ 
+ 
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.EventListener;
+import java.util.Map;
+import java.util.Set;
+import javax.servlet.ServletRegistration.Dynamic;
+import javax.servlet.descriptor.JspConfigDescriptor;
+ 
+ 
+public interface ServletContext {
+    String TEMPDIR = "javax.servlet.context.tempdir";
+ 
+    String getContextPath();
+    ServletContext getContext(String var1);
+    int getMajorVersion();
+    int getMinorVersion();
+    int getEffectiveMajorVersion();
+    int getEffectiveMinorVersion();
+    String getMimeType(String var1);
+    Set getResourcePaths(String var1);
+    URL getResource(String var1) throws MalformedURLException;
+    InputStream getResourceAsStream(String var1);
+    RequestDispatcher getRequestDispatcher(String var1);
+    RequestDispatcher getNamedDispatcher(String var1);
+    /** @deprecated */
+    Servlet getServlet(String var1) throws ServletException;
+    /** @deprecated */
+    Enumeration getServlets();
+    /** @deprecated */
+    Enumeration getServletNames();
+    void log(String var1);
+    /** @deprecated */
+    void log(Exception var1, String var2);
+    void log(String var1, Throwable var2);
+    String getRealPath(String var1);
+    String getServerInfo();
+    String getInitParameter(String var1);
+    Enumeration getInitParameterNames();
+    boolean setInitParameter(String var1, String var2);
+    Object getAttribute(String var1);
+    Enumeration getAttributeNames();
+ 
+    void setAttribute(String var1, Object var2);
+ 
+    void removeAttribute(String var1);
+ 
+    String getServletContextName();
+    
+    Dynamic addServlet(String var1, String var2);
+ 
+    Dynamic addServlet(String var1, Servlet var2);
+ 
+ 
+    Dynamic addServlet(String var1, Class var2);
+ 
+     extends Servlet> T createServlet(Classvar1) throws ServletException;
+ 
+    ServletRegistration getServletRegistration(String var1);
+ 
+    Map ? extends ServletRegistration> getServletRegistrations();
+ 
+    javax.servlet.FilterRegistration.Dynamic addFilter(String var1, String var2);
+ 
+    javax.servlet.FilterRegistration.Dynamic addFilter(String var1, Filter var2);
+ 
+    javax.servlet.FilterRegistration.Dynamic addFilter(String var1, Class var2);
+ 
+     extends Filter> T createFilter(Classvar1) throws ServletException;
+    FilterRegistration getFilterRegistration(String var1);
+    Map ? extends FilterRegistration> getFilterRegistrations();
+    SessionCookieConfig getSessionCookieConfig();
+    void setSessionTrackingModes(Setvar1);
+ 
+    Set getDefaultSessionTrackingModes();
+ 
+    Set getEffectiveSessionTrackingModes();
+ 
+    void addListener(String var1);
+     extends EventListener> void addListener(T var1);
+ 
+    void addListener(Class var1);
+     extends EventListener> T createListener(Classvar1) throws ServletException;
+    JspConfigDescriptor getJspConfigDescriptor();
+    ClassLoader getClassLoader();
+    void declareRoles(String... var1);
+}
+```
+可以看到ServletContext接口中定义了很多操作，能对Servlet中的各种资源进行访问、添加、删除等。
 
 
 
