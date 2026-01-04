@@ -102,7 +102,8 @@ ServletRequestListener：对请求对象的初始化和销毁进行监听； Ser
 # Tomcat基础
 ## 什么是Tomcat
 把Tomcat对标Apache来看会更好的理解Tomcat
-Apache是反向代理，一般做一些经他I
+Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护在后面。
+从功能上来讲Apache主要是处理图片 css js这些静态资源，看到什么jpg html什么的 他会从自己的本地磁盘拿给用户，看到什么.do .jsp他就会交给擅长处理这些java代码的Tomcat
 
 
 
