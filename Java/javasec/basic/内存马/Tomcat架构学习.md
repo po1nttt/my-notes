@@ -115,8 +115,12 @@ Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护�
 
 在 Tomcat 中 Wrapper 代表一个独立的 servlet 实例， StandardWrapper 是 Wrapper 接口的标准实现类（StandardWrapper 的主要任务就是载入 Servlet 类并且进行实例化），同时其从 ContainerBase 类继承过来，表示他是一个容器，只是他是最底层的容器，不能再含有任何的子容器了，且其父容器只能是 context。而我们在也就是需要在这里去载入我们自定义的 Servlet 加载我们的内存马。
 
+# Tomcat架构原理
+Tomcat 的框架如下图所示，主要有 server、service、connector、container 四个部分
+![](picture/Pasted%20image%2020260104210749.png)
+其中 `server`就是Tomcat本体，一个 Server 可以包含多个 Service。
+
+Service 是一个逻辑组合。它的核心作用是将“接收请求”的组件和“处理请求”的组件绑定在一起。
 
 
-
-
-
+在每个 Service 内部，有Connector（连接器）和Container（容器）
