@@ -101,7 +101,8 @@ ServletRequestListener：对请求对象的初始化和销毁进行监听； Ser
 
 # Tomcat基础
 ## 什么是Tomcat
-
+把Tomcat对标Apache来看会更好的理解Tomcat
+Apache是反向代理，一般做一些经他I
 
 
 
