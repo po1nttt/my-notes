@@ -109,6 +109,13 @@ Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护�
 所以从本质上来讲，Apache是web服务器只明白前端三件套，Tomcat是web容器，看得懂html和java，但是他拥有JVM，用户有处理jsp中的java代码的能力，执行java后，算出结果（比如 JSON 数据或 HTML 片段），吐给前面的 Apache，再由Apache来包装成http返回客户端。
 
 
+### Tomcat和Servlet的关系
+
+我们根据上面的基础知识可以知道 **Tomcat 是 Web 应用服务器，是一个 Servlet/JSP 容器**，而 Servlet 容器从上到下分别是 Engine、Host、Context、Wrapper。
+
+在 Tomcat 中 Wrapper 代表一个独立的 servlet 实例， StandardWrapper 是 Wrapper 接口的标准实现类（StandardWrapper 的主要任务就是载入 Servlet 类并且进行实例化），同时其从 ContainerBase 类继承过来，表示他是一个容器，只是他是最底层的容器，不能再含有任何的子容器了，且其父容器只能是 context。而我们在也就是需要在这里去载入我们自定义的 Servlet 加载我们的内存马。
+
+
 
 
 
