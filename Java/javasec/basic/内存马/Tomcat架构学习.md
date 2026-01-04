@@ -64,7 +64,7 @@ filter 也称之为过滤器，是对 Servlet 技术的一个强补充，其主�
 ### 基本工作原理
 1、Filter 程序是一个实现了特殊接口的 Java 类，与 Servlet 类似，也是由 Servlet 容器进行调用和执行的。
 
-2、当在 web.xml 注册了一个 Filter 来对某个 Servlet 程序进行拦截处理时，它可以决定是否将请求继续传递给 Servlet 程序，以及对请求和响应消息是否进行修改。
+2、当在 web.xml 注册了一个 Filter 来对某个 Servlet 程序进行拦截处理时，它可以决定是否将请求继续传递给 Servlet 程序，以及对请求和响应消息是否进行修改。换句话说：在 `web.xml` 里，你可以为不同的 Filter 定义不同的“捕获网”。
 
 3、当 Servlet 容器开始调用某个 Servlet 程序时，如果发现已经注册了一个 Filter 程序来对该 Servlet 进行拦截，那么容器不再直接调用 Servlet 的 service 方法，而是调用 Filter 的 doFilter 方法，再由 doFilter 方法决定是否去激活 service 方法。
 
@@ -77,8 +77,7 @@ filter 也称之为过滤器，是对 Servlet 技术的一个强补充，其主�
 7、`FilterChain.doFilter` 是一个阻塞调用，代码执行到`FilterChain.doFilter`开始向下传递请求，一直到 `Servlet`执行完，然后返回结果到 `FilterChain.doFilter`接着执行。这也解释了为什么Filter中可以同时实现“请求预处理”和“响应后处理”
 
 
-
-
+### Filter 的生命周期
 
 
 
