@@ -230,9 +230,9 @@ Server (整个 Tomcat 服务器)
     └── Engine (引擎：管理虚拟主机，Servlet 引擎核心)
         └── Host (虚拟主机：例如 localhost，对应域名)
             └── Context (Web 应用：对应你的项目)
-	           ├── Listeners (监听器列表：最先触发) 
-	           ├── Filters (过滤器链：请求必经之路) 
-	           └── Wrappers (包装器：里面住着具体的 Servlet)
+	           ├── Listeners (监听器列表：最先触发) ⭐
+	           ├── Filters (过滤器链：请求必经之路) ⭐
+	           └── Wrappers (包装器：里面住着具体的 Servlet)⭐
 ```
 ```
 (I) Container [顶层容器接口：定义了所有容器的共性]
