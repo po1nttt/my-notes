@@ -118,9 +118,36 @@ Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护�
 # Tomcat架构原理
 Tomcat 的框架如下图所示，主要有 server、service、connector、container 四个部分
 ![](picture/Pasted%20image%2020260104210749.png)
-其中 `server`就是Tomcat本体，一个 Server 可以包含多个 Service。
+ `server`：就是Tomcat本体，它要能够提供一个接口让其它程序能够访问到这个 Service 集合、同时要维护它所包含的所有 Service 的生命周期，包括如何初始化、如何结束服务、如何找到别人要访问的 Service。
+一个 Server 可以包含多个 Service。
 
-Service 是一个逻辑组合。它的核心作用是将“接收请求”的组件和“处理请求”的组件绑定在一起。
+`Service` ：是一个逻辑组合。它的核心作用是将“接收请求”的组件和“处理请求”的组件绑定在一起，同时会初始化它下面的其它组件，在 Connector 和 Container 外面多包一层，把它们组装在一起，向外面提供服务，一个 Service 可以设置多个 Connector，但是只能有一个 Container 容器
+Tomcat 中 Service 接口的标准实现类是 StandardService ，它不仅实现了 Service 借口同时还实现了 Lifecycle 接口，这样它就可以控制它下面的组件的生命周期了
 
 
 在每个 Service 内部，有Connector（连接器）和Container（容器）
+
+
+`Connector`：负责监听端口（如 8080），接收 Socket 连接，将原始的字节流解析成 `HttpServletRequest` 对象。
+
+`Container`：负责处理业务逻辑。它里面运行的就是 Servlet。由 Servlet 具体负责处理 Request 请求，对应下图中的 servlet 容器。
+![](picture/Pasted%20image%2020260104211221.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
