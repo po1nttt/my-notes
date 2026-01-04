@@ -56,7 +56,7 @@ user@tryhackme$ ffuf -w valid_usernames.txt:W1,/usr/share/wordlists/SecLists/Pas
 
 ## 3.Logic Flaw  逻辑缺陷
 
-![[Pasted image 20250913122811.png]]
+![Pasted image 20250913122811.png](Pasted%20image%2020250913122811.png)
 
 
 例如：
@@ -150,7 +150,7 @@ https://fusionauth.io/dev-tools/jwt-decoder
 
 #### cookieJWT改写
 当我们遇到一个cookie是以令牌形式呈现的时候
-![[Pasted image 20250920161204.png]]
+![Pasted image 20250920161204.png](Pasted%20image%2020250920161204.png)
 
 他一般由这三部分组成
 
