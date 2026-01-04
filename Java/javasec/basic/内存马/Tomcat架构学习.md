@@ -105,7 +105,8 @@ ServletRequestListener：对请求对象的初始化和销毁进行监听； Ser
 Apache是反向代理，一般挡在Tomcat的前面，可以把服务器保护在后面。
 从功能上来讲Apache主要是处理图片 css js这些静态资源，看到什么jpg html什么的 他会从自己的本地磁盘拿给用户，看到什么.do .jsp他就会交给擅长处理这些java代码的Tomcat
 
-
+他是帮助Apache来动态解析这些java代码的
+所以从本质上来讲，Apache是web服务器只明白前端三件套，Tomcat是web容器，看得懂html和java，但是他拥有JVM，用户有处理jsp中的java代码的能力，执行java后，算出结果（比如 JSON 数据或 HTML 片段），吐给前面的 Apache，再由Apache来包装成http返回客户端。
 
 
 
