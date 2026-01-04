@@ -249,6 +249,7 @@ Server (整个 Tomcat 服务器)
 ```
 ![](picture/Pasted%20image%2020260104230418.png)
 
+说了这么多，最终还是围绕着 `StandardContext`来讲的，因为最终 `StandardContext`才是Tomcat中负责和底层交互的Context。
 
 
 
