@@ -210,10 +210,10 @@ public interface ServletContext {
 可以看到ServletContext接口中定义了很多操作，能对Servlet中的各种资源进行访问、添加、删除等。
 
 ## ApplicationContext
-`org.apache.catalina.core.ApplicationContext` 这也是一个接口，它是 Tomcat 内部用来直接实现 `ServletContext` 接口的一个类。它是 `StandardContext` 的一个**外观（Facade）**。Tomcat 不想让你直接操作最底层的 `StandardContext`，所以套了一个 `ApplicationContext` 给你用。
+`org.apache.catalina.core.ApplicationContext` ，它是 Tomcat 内部用来直接实现 `ServletContext` 接口的一个类。它是 `StandardContext` 的一个**外观（Facade）**。Tomcat 不想让你直接操作最底层的 `StandardContext`，所以套了一个 `ApplicationContext` 给你用。只暴露你想用的功能（比如 `getAttribute`）
 ## StandardContext
-
-
+这是核心实现类，是 `ApplicationContext`这个门面去除封装后的真正实现类
+里面有一个web应用在Tomcat内存里的全部东西，所有的 Filter、所有的 Servlet 实例、配置信息）全部存在这个 `StandardContext` 对象里。
 ## Context
 context是上下文的意思，在java中经常能看到这个东西。那么到底是什么意思呢？
 根据yzddmr6师傅的理解，如果把某次请求比作电影中的事件，那么context就相当于事件发生的背景。例如一部电影中的某个镜头中，张三大喊“奥利给”，但是只看这一个镜头我们不知道到底发生了什么，张三是谁，为什么要喊“奥利给”。所以就需要交代当时事情发生的背景。张三是吃饭前喊的奥利给？还是吃饭后喊的奥利给？因为对于同一件事情：张三喊奥利给这件事，发生的背景不同意义可能是不同的。吃饭前喊奥利给可能是饿了的意思，吃饭后喊奥利给可能是说吃饱了的意思。
