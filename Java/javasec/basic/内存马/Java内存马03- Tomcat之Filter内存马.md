@@ -180,18 +180,10 @@ private final StandardContext.ContextFilterMaps filterMaps = new StandardContext
 它有三个重要的东西：  
 一个是Context，一个是filter，一个是filterDef
 ![](picture/Pasted%20image%2020260105194557.png)
-可以看到
-filterDef就是对应web.xml中的信息
-```xml
-<filter>  
- <filter-name>filter</filter-name>  
- <filter-class>filter</filter-class>  
-</filter>
-```
 ![](picture/Pasted%20image%2020260105194708.png)
+现在我们好奇的就是，他是怎么把我们的映射关系存进他的上下文，然后放进 `FilterMap`的
 
-
-
+那好，我们现在去 `org.apache.catalina.core.StandardContext`标准上下文这个类中看看我们的映射关系是怎么放进上下文的？
 
 
 
