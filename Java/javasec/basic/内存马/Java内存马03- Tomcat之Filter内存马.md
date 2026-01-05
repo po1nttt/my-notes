@@ -76,9 +76,8 @@ ok我们回到正题，接着进入 `internalDoFilter()`
 然后再次循环，可以看到pos变为1了
 
 ![](picture/Pasted%20image%2020260105175124.png)
-
-
-
+循环完毕，可以看到一些释放的操作
+![](picture/Pasted%20image%2020260105180108.png)
 
 
 
