@@ -59,7 +59,8 @@ ok，我们首次访问之后初始化，初始化完毕之后进入 `filterChai
 步过这个`if`
 到达了 `internalDoFilter()`
 ![](picture/Pasted%20image%2020260105172556.png)
-
+通过观察我们也可以发现，其实整个过滤的过程都是在传递request和response对象，让他们走一遍过滤器链。
+![](picture/Pasted%20image%2020260105172817.png)
 
 
 
