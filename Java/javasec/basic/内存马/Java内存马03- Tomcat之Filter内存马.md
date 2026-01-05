@@ -123,8 +123,8 @@ ok开始分析
 配合着注释，我们可以大概了解过程，做了一系列安全判断，最终new了一个 `ApplicationFilterChain()`然后从上下文中拿到 `filterMaps[]`
 这个 `filterMaps`就装着对路由的映射，告诉Tomcat 访问什么路由的时候，会执行什么Filter
 ![](picture/Pasted%20image%2020260105192250.png)
-
-
+遍历`StandardContext.filterMaps`得到filter与URL的映射关系并通过`matchDispatcher()`、`matchFilterURL()`方法进行匹配，匹配成功后，还需判断`StandardContext.filterConfigs`中，是否存在对应filter的实例，当实例不为空时通过`addFilter`方法，将管理filter实例的`filterConfig`添加入`filterChain`对象中。
+![](picture/Pasted%20image%2020260105192710.png)
 
 
 
