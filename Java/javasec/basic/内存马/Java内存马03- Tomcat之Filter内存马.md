@@ -529,15 +529,50 @@ public class exploitServlet extends HttpServlet {
 
 
 # 内存马排查
+参考链接：https://syst1m.com/post/memory-webshell/#arthas
 
+#### arthas
 
+项目链接：https://github.com/alibaba/arthas
 
+我们可以利用该项目来检测我们的内存马
 
+`java -jar arthas-boot.jar --telnet-port 9998 --http-port -1`
 
+这里也可以直接 `java -jar arthas-boot.jar`
 
+这里选择我们 Tomcat 的进程
+![](picture/Pasted%20image%2020260105223955.png)
+输入 1 之后会进入如下进程
+![](picture/Pasted%20image%2020260105224008.png)
+利用 `sc *.Filter` 进行模糊搜索，会列出所有调用了 Filter 的类？
+![](picture/Pasted%20image%2020260105224019.png)
+利用`jad --source-only org.apache.jsp.evil_jsp` 直接将 Class 进行反编译
+![](picture/Pasted%20image%2020260105224032.png)
+同时也可以进行监控 ，当我们访问 url 就会输出监控结果
 
+`watch org.apache.catalina.core.ApplicationFilterFactory createFilterChain 'returnObj.filters.{?#this!=null}.{filterClass}'`
+![](picture/Pasted%20image%2020260105224043.png)
+#### copagent
 
+项目链接：https://github.com/LandGrey/copagent
 
+也是一款可以检测内存马的工具
+![](picture/Pasted%20image%2020260105224055.png)
+#### java-memshell-scanner
 
+项目链接：https://github.com/c0ny1/java-memshell-scanner
 
+c0ny1 师傅写的检测内存马的工具，能够检测并且进行删除，是一个非常方便的工具
+![](picture/Pasted%20image%2020260105224109.png)
 
+该工具是由 jsp 实现的，我们这里主要来学习一下 c0ny1 师傅 删除内存马的逻辑
+
+检测是通过遍历 filterMaps 中的所有 filterMap 然后显示出来，让我们自己认为判断，所以这里提供了 dumpclass
+![](picture/Pasted%20image%2020260105224119.png)
+删除的话，这里主要是通过反射调用 StandardContext#removeFilterDef 方法来进行删除
+
+![](picture/Pasted%20image%2020260105224132.png)
+
+# 总结
+内存马远不止这些，本文中内存马还是需要上传 jsp 来生效，但是实际上利用方式远不止这样，我们还可以借助各种反序列化来动态注册 Filter 等，本文相当于是开篇，后面会继续学习内存马相关技术
