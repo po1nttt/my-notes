@@ -70,9 +70,12 @@ ok我们回到正题，接着进入 `internalDoFilter()`
 还有一个\[1\]是Tomcat的过滤器，名字叫Tomcat WebSocket Filter ，走的是 `org.apache.tomcat.websocket.server.WsFilter`类的逻辑
 ![](picture/Pasted%20image%2020260105173703.png)
 
+可以看到，最终执行了 `filter.doFilter()`执行了我们过滤器的主逻辑
+![](picture/Pasted%20image%2020260105174954.png)
+![](picture/Pasted%20image%2020260105175048.png)
+然后再次循环，可以看到pos变为1了
 
-
-
+![](picture/Pasted%20image%2020260105175124.png)
 
 
 
