@@ -245,11 +245,11 @@ ok没问题
 那我们就要想办法把他塞进上下文了
 前面说，Filter 的注入涉及到 **`filterDefs`**（定义）、**`filterMaps`**（路由映射）以及 **`filterConfigs`**（运行实例缓存）这三个关键变量。将恶意 Filter 的信息和实例分别填充进这三个容器，即可完成内存马的打入。因此，如何绕过沙箱或封装直接获取到当前 Web 应用的 `StandardContext` 实例，成了实现攻击的核心前提。
 
-于是初步思路是这样通过反射拿到上下文对象的：
+于是初步思路是这样拿到上下文对象的：
 ```java
 WebappClassLoaderBase webappClassLoaderBase = (WebappClassLoaderBase) Thread.currentThread().getContextClassLoader();  //从线程中拿到当前线程ContextClassLoader
 
-StandardRoot standardroot = (StandardRoot) webappClassLoaderBase.getResources();  
+StandardRoot standardroot = (StandardRoot) webappClassLoaderBase.getResources();//拿到WebResourceRoot接口的实例，强转为StandarRoot，其中有指向StandardContext的引用。
 
 StandardContext standardContext = (StandardContext) standardroot.getContext();
 ```
