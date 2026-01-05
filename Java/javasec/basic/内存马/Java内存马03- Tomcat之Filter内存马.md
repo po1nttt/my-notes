@@ -162,10 +162,21 @@ filterDefs变量：包含所有过滤器包括实例内部等变量
 
 filterConfigs变量：包含所有与过滤器对应的filterDef信息及过滤器实例，进行过滤器进行管理
 ```
+filterConfigs 成员变量是一个HashMap对象，里面存储了filter名称与对应的`ApplicationFilterConfig`对象的键值对，在`ApplicationFilterConfig`对象中则存储了Filter实例以及该实例在web.xml中的注册信息。
 
+filterDefs 成员变量成员变量是一个HashMap对象，存储了filter名称与相应`FilterDef`的对象的键值对，而`FilterDef`对象则存储了Filter包括名称、描述、类名、Filter实例在内等与filter自身相关的数据
 
+filterMaps 中的`FilterMap`则记录了不同filter与`UrlPattern`**的映射关系**
+代码理解
+```java
+private HashMap<String, ApplicationFilterConfig> filterConfigs = new HashMap(); 
 
+private HashMap<String, FilterDef> filterDefs = new HashMap(); 
 
+private final StandardContext.ContextFilterMaps filterMaps = new StandardContext.ContextFilterMaps();
+```
+
+讲完了一些基础的概念，我们来看一看 ApplicationFilterConfig 里面存了什么东西
 
 
 
