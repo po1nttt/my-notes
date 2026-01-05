@@ -125,6 +125,9 @@ ok开始分析
 ![](picture/Pasted%20image%2020260105192250.png)
 遍历`StandardContext.filterMaps`得到filter与URL的映射关系并通过`matchDispatcher()`、`matchFilterURL()`方法进行匹配，匹配成功后，还需判断`StandardContext.filterConfigs`中，是否存在对应filter的实例，当实例不为空时通过`addFilter`方法，将管理filter实例的`filterConfig`添加入`filterChain`对象中。
 ![](picture/Pasted%20image%2020260105192710.png)
+最后 return回去，走到刚刚看的doFilter，真正的执行Filter。
+Filter内存马的思想就是要在这个过程中，让Tomcat来执行我们的Filter 我们的Filter中存在恶意代码。
+
 
 
 
