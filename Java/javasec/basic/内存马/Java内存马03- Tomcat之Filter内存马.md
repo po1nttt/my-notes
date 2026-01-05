@@ -65,8 +65,9 @@ ok我们回到正题，接着进入 `internalDoFilter()`
 我们可以发现，源代码也写着 `// Call the next filter if there is one`
 这里就是我们之前说到的FilterChain的地方，通过循环，把每一个Filter都过一遍
 ![](picture/Pasted%20image%2020260105173543.png)
-这里我们有两个，0是我们自己写的名字叫filter 走的逻辑是filter类，
-还有一个1是Tomcat的过滤器，名字叫Tomcat WebSocket Filter ，走的是 `org.apache.tomcat.websocket.server.WsFilter`类的逻辑
+可以看到 `ApplicationFilterConfig filterConfig = filters[pos++];`这行有一个filters数组，
+这里数组中有两个对象，\[0\]是我们自己写的名字叫filter 走的逻辑是filter类，
+还有一个\[1\]是Tomcat的过滤器，名字叫Tomcat WebSocket Filter ，走的是 `org.apache.tomcat.websocket.server.WsFilter`类的逻辑
 ![](picture/Pasted%20image%2020260105173703.png)
 
 
