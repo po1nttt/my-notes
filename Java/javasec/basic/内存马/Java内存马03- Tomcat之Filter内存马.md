@@ -126,13 +126,42 @@ ok开始分析
 遍历`StandardContext.filterMaps`得到filter与URL的映射关系并通过`matchDispatcher()`、`matchFilterURL()`方法进行匹配，匹配成功后，还需判断`StandardContext.filterConfigs`中，是否存在对应filter的实例，当实例不为空时通过`addFilter`方法，将管理filter实例的`filterConfig`添加入`filterChain`对象中。
 ![](picture/Pasted%20image%2020260105192710.png)
 最后 return回去，走到刚刚看的doFilter，真正的执行Filter。
-Filter内存马的思想就是要在这个过程中，让Tomcat来执行我们的Filter 我们的Filter中存在恶意代码。
 
+# Filter内存马攻击思路
+内存马的思路就是
+如果我也写一段代码，调用 Context 里的某个 `put` 方法（虽然它是私有的，但我们可以用反射），把我的马塞进 `filterConfigs` 这个 Map。那么，Tomcat 在下次执行 `findFilterConfig` 时，就会“无意识”地把我的马取出来执行。
+本质也就是如何修改我的 `filterMaps`，也就是如何修改 web.xml 中的 filter-mapping 标签。
+只要让`filterMaps`映射到我的恶意 `Filter`就能执行恶意代码了。
 
+filterMaps 可以通过如下两个方法添加数据，对应的类是 `StandardContext` 这个类
+```java
+@Override
+public void addFilterMap(FilterMap filterMap) {
+    validateFilterMap(filterMap);
+    // Add this filter mapping to our registered set
+    filterMaps.add(filterMap);
+    fireContainerEvent("addFilterMap", filterMap);
+}
 
+@Override
+public void addFilterMapBefore(FilterMap filterMap) {
+    validateFilterMap(filterMap);
+    // Add this filter mapping to our registered set
+    filterMaps.addBefore(filterMap);
+    fireContainerEvent("addFilterMap", filterMap);
+}
+```
 
+`StandardContext` 这个类是一个容器类，它负责存储整个 Web 应用程序的数据和对象，并加载了 web.xml 中配置的多个 Servlet、Filter 对象以及它们的映射关系。
 
+里面有三个和Filter有关的成员变量：
+```java
+filterMaps变量：包含所有过滤器的URL映射关系 
 
+filterDefs变量：包含所有过滤器包括实例内部等变量 
+
+filterConfigs变量：包含所有与过滤器对应的filterDef信息及过滤器实例，进行过滤器进行管理
+```
 
 
 
