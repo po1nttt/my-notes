@@ -440,18 +440,13 @@ public class exploitServlet extends HttpServlet {
 
 ```java
 <%@ page import="java.lang.reflect.Field" %>  
-<%@ page import="org.apache.catalina.connector.Request" %>  
-<%@ page import="org.apache.catalina.core.StandardContext" %>  
 <%@ page import="java.util.Map" %>  
 <%@ page import="java.io.IOException" %>  
 <%@ page import="java.io.InputStream" %>  
 <%@ page import="java.util.Scanner" %>  
-<%@ page import="org.apache.tomcat.util.descriptor.web.FilterDef" %>  
-<%@ page import="org.apache.tomcat.util.descriptor.web.FilterMap" %>  
+  
 <%@ page import="java.lang.reflect.Constructor" %>  
-<%@ page import="org.apache.catalina.core.ApplicationFilterConfig" %>  
-<%@ page import="org.apache.catalina.Context" %>  
-<%@ page import="java.io.PushbackInputStream" %>  
+  
 <%--  
   Created by IntelliJ IDEA.  User: point  Date: 2026/1/5  Time: 22:13  To change this template use File | Settings | File Templates.--%>  
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>  
