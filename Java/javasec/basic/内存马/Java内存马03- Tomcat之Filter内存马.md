@@ -17,16 +17,13 @@ public class filter implements Filter{
  public void init(FilterConfig filterConfig) throws ServletException {  
         System.out.println("Filter 初始构造完成");  
  }  
-  
     @Override  
  public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {  
         System.out.println("执行了过滤操作");  
  filterChain.doFilter(servletRequest,servletResponse);  
  }  
-  
     @Override  
  public void destroy() {  
-  
     }  
 }
 ```
@@ -50,6 +47,30 @@ public class filter implements Filter{
     
 </web-app>
 ```
+启动之后可以看到，我们当前首次访问的时候初始化了Filter 每次访问都会执行过滤操作
+![](picture/Pasted%20image%2020260105170610.png)
+
+# 在访问 /filter之后的流程分析
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
