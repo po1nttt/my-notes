@@ -15,9 +15,41 @@ Java Web 开发中的监听器（Listener）就是 Application、Session 和 Req
 这里我找到了 ServletRequestListener ，因为根据名字以及其中的 requestInitialized 方法感觉我们的发送的每个请求都会触发这个监控器
 
 有了猜想之后就可以先开始实践了，编写一个简单的 demo 来进行测试
+写一个Listener
+```java
+package demo.tomcat;  
+  
+import javax.servlet.ServletRequestEvent;  
+import javax.servlet.ServletRequestListener;  
+  
+public class SerVlertListener implements ServletRequestListener {  
+    public SerVlertListener() {  
+        super();  
+    }  
+  
+    @Override  
+    public void requestDestroyed(ServletRequestEvent sre) {  
+  
+    }  
+  
+    @Override  
+    public void requestInitialized(ServletRequestEvent sre) {  
+        System.out.println("requestInitialized!");  
+  
+    }  
+}
+```
+在web.xml里把我们的Linstener注册进去
+```xml
+<listener>  
+    <listener-class>demo.tomcat.SerVlertListener</listener-class>  
+</listener>
+```
+# 流程分析
+- 流程分析的意义是让我们能够正确的写入恶意的内存马，具体要解决的其实有以下两个问题：
 
-
-
+1、 我们的恶意代码应该在哪儿编写？  
+2、 Tomcat 中的 Listener 是如何实现注册的？
 
 
 
