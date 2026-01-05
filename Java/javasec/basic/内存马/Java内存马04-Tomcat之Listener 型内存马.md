@@ -51,6 +51,14 @@ public class SerVlertListener implements ServletRequestListener {
 1、 我们的恶意代码应该在哪儿编写？  
 2、 Tomcat 中的 Listener 是如何实现注册的？
 
+第一个问题现在我们已经想到一种显而易见的方法
+写在这里，只要把Listener注册进去，那么访问任何页面都会执行我们的恶意代码。
+```java
+    public void requestInitialized(ServletRequestEvent sre) {  
+        System.out.println("requestInitialized!");  
+  
+    }  
+```
 
 
 
