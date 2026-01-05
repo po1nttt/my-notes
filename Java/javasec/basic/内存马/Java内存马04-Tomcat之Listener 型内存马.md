@@ -89,7 +89,8 @@ ok我们先解决第一步，拿到我们传入的get参数或者post传参。�
 这样就行了
 ![](picture/Pasted%20image%2020260105235647.png)
 `org.apache.catalina.connector.RequestFacade`可以看到是这个类，我们去看看
-
+ok这里的request是 Request类的我们去看看
+![](picture/Pasted%20image%2020260105235956.png)
 
 
 
