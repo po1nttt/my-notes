@@ -52,14 +52,14 @@ public class SerVlertListener implements ServletRequestListener {
 2、 Tomcat 中的 Listener 是如何实现注册的？
 
 第一个问题现在我们已经想到一种显而易见的方法
-写在这里，只要把Listener注册进去，那么访问任何页面都会执行我们的恶意代码。
+在 Listener 这里提供了 ServletRequestEvent 类型的参数，从名字可推测出为 Servlet请求事件
 ```java
     public void requestInitialized(ServletRequestEvent sre) {  
         System.out.println("requestInitialized!");  
   
     }  
 ```
-
+我们既然要做内存马所以就必须要获取到发送过来的请求，然后从请求中获取我们要执行的命令然后利用 Runtime 来进行执行，例如：`https://www.xxxx.com/demo?cmd=ls` 这里面 cmd 参数的值，所以我们需要寻找 sre 的一个方法来获取到请求
 
 
 
