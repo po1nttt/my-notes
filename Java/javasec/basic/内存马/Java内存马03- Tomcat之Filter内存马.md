@@ -80,6 +80,14 @@ ok我们回到正题，接着进入 `internalDoFilter()`
 ![](picture/Pasted%20image%2020260105180108.png)
 最终去调用servlet.service()把request 和response传递下去
 
+这里就呼应了我们之前讲Tomcat的时候说的，由最开始的`Filter.doFilter()`调用 `filterChain.doFilter()`然后由最后的 `filterChain`去调用 `Servlet。service()`
+
+# 访问 /filter之前的源码分析
+
+回到主线，我们的思路是要在filter的最前面加上我们的东西，让他执行恶意命令对吧。
+那我们就要找找filter是怎么生成的，然后让他能调用到我们的东西就完美了。
+
+
 
 
 
