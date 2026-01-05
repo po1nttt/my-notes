@@ -78,7 +78,7 @@ ok我们回到正题，接着进入 `internalDoFilter()`
 ![](picture/Pasted%20image%2020260105175124.png)
 循环完毕，可以看到一些释放的操作
 ![](picture/Pasted%20image%2020260105180108.png)
-
+最终去调用servlet.service()把request 和response传递下去
 
 
 
