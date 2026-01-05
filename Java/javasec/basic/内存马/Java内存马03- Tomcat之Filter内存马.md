@@ -57,7 +57,8 @@ ok，我们首次访问之后初始化，初始化完毕之后进入 `filterChai
 这里会进到 `ApplicationFilterChain` 类的 doFilter() 方法，它主要是进行了 `Globals.IS_SECURITY_ENABLED`，也就是全局安全服务是否开启的判断。
 ![](picture/Pasted%20image%2020260105172327.png)
 步过这个`if`
-
+到达了 `internalDoFilter()`
+![](picture/Pasted%20image%2020260105172556.png)
 
 
 
