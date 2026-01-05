@@ -177,6 +177,18 @@ private final StandardContext.ContextFilterMaps filterMaps = new StandardContext
 ```
 
 讲完了一些基础的概念，我们来看一看 ApplicationFilterConfig 里面存了什么东西
+它有三个重要的东西：  
+一个是Context，一个是filter，一个是filterDef
+![](picture/Pasted%20image%2020260105194557.png)
+可以看到
+filterDef就是对应web.xml中的信息
+```xml
+<filter>  
+ <filter-name>filter</filter-name>  
+ <filter-class>filter</filter-class>  
+</filter>
+```
+![](picture/Pasted%20image%2020260105194708.png)
 
 
 
