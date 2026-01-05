@@ -112,12 +112,13 @@ Server (整个 Tomcat 服务器)
 从这里最后一个invoke 开始，就开始进行doFilter的过程了
 ![](picture/Pasted%20image%2020260105185911.png)
 
-ok打到这里开始分析
-![](picture/Pasted%20image%2020260105190050.png)
+ok开始分析
+在这个invoke方法里，我们看到了 `// Create the filter chain for this request`
+![](picture/Pasted%20image%2020260105190927.png)
+并且在下面调用了 `filterChain.doFilter()`走到了我们上一个标题分析过的 `doFilter`
 
-
-
-
+那我们就看看 `ApplicationFilterChain filterChain =  ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);`
+到底是怎么创建 `FilterChain`的
 
 
 
