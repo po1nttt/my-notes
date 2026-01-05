@@ -184,10 +184,19 @@ private final StandardContext.ContextFilterMaps filterMaps = new StandardContext
 现在我们好奇的就是，他是怎么把我们的映射关系存进他的上下文，然后放进 `FilterMap`的
 
 那好，我们现在去 `org.apache.catalina.core.StandardContext`标准上下文这个类中看看我们的映射关系是怎么放进上下文的？
+在这个类中，可以看到两个有趣的方法
+一个是 `filterStart()`这里的 `filterConfigs.put(name, filterConfig);`把配置放进hashmap了
+![](picture/Pasted%20image%2020260105195252.png)
 
-
-
-
+还有就是他有这个方法，可以把映射关系添加到 `filterMap`中
+![](picture/Pasted%20image%2020260105195422.png)
+## 构造
+所以我们的构造思路如下：
+1. 获取当前的标准上下文对象
+2. 通过标准上下文对象获取 `filterConfigs`
+3. 接着put进去我们自己的 `filter`对象
+4. 然后为我们自己的 `filter`创建一个 `FilterDef`
+5. 最后把ServletContext对象、filter对象、FilterDef全部都设置到filterConfigs即可完成内存马的实现
 
 
 
