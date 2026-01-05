@@ -54,6 +54,25 @@ public class filter implements Filter{
 根据我们前面知道，进入Filter中的时候，会调用 `Filter.doFilter()`内部的 `filterChain.doFilter()`来执行过滤操作，那我们就打断点进去看看
 ok，我们首次访问之后初始化，初始化完毕之后进入 `filterChain.doFilter()`
 ![](picture/Pasted%20image%2020260105172128.png)
+这里会进到 `ApplicationFilterChain` 类的 doFilter() 方法，它主要是进行了 `Globals.IS_SECURITY_ENABLED`，也就是全局安全服务是否开启的判断。
+![](picture/Pasted%20image%2020260105172327.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
