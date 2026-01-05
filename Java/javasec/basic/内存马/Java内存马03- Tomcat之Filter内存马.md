@@ -120,7 +120,9 @@ ok开始分析
 那我们就看看 `ApplicationFilterChain filterChain =  ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);`
 到底是怎么创建 `FilterChain`的
 
-
+配合着注释，我们可以大概了解过程，做了一系列安全判断，最终new了一个 `ApplicationFilterChain()`然后从上下文中拿到 `filterMaps[]`
+这个 `filterMaps`就装着对路由的映射，告诉Tomcat 访问什么路由的时候，会执行什么Filter
+![](picture/Pasted%20image%2020260105192250.png)
 
 
 
