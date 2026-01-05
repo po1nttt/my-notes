@@ -52,9 +52,8 @@ public class filter implements Filter{
 
 # 访问 /filter时的源码分析
 根据我们前面知道，进入Filter中的时候，会调用 `Filter.doFilter()`内部的 `filterChain.doFilter()`来执行过滤操作，那我们就打断点进去看看
-
-
-
+ok，我们首次访问之后初始化，初始化完毕之后进入 `filterChain.doFilter()`
+![](picture/Pasted%20image%2020260105172128.png)
 
 
 
