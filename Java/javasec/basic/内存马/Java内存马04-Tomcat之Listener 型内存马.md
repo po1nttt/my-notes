@@ -68,9 +68,9 @@ public class SerVlertListener implements ServletRequestListener {
 - Tomcat 接收到请求，心想：“有个请求进来了，我得通知监听器。”
 - Tomcat 把这个请求打包成一个 `ServletRequestEvent` (即 `sre`)，然后调用`requestInitialized(sre)`。
 
-那我们想办法把这个命令从 `ServletRequestEvent sre`这个传入的参数中拿出来，然后在`requestInitialized()`种写入我们的木马，传入我们刚刚拿的对象，这样就可以执行命令了。
+那我们想办法把请求的对象从 `ServletRequestEvent sre`这个传入的参数中拿出来，然后在`requestInitialized()`种写入我们的木马，传入我们刚刚拿的对象，这样就可以执行命令，并且有回显了。
 
-ok我们先解决第一步，拿到我们传入的get参数或者post传参。所以我们需要寻找 sre 的一个方法来获取到请求
+ok我们先解决第一步，拿到我们传入的get参数或者post传参。所以我们需要寻找 sre 的一个方法来获取到请求对象。
 
 通过IDEA的自动补全功能可以帮我们找到`getServletRequest`（感觉这个技巧还挺巧，学到了）
 ![](picture/Pasted%20image%2020260105235208.png)
@@ -91,7 +91,7 @@ ok我们先解决第一步，拿到我们传入的get参数或者post传参。�
 `org.apache.catalina.connector.RequestFacade`可以看到是这个类，我们去看看
 ok这里的request是 Request类的我们去看看
 ![](picture/Pasted%20image%2020260105235956.png)
-在这里我们可以看到，真正存放着我们get post参数的那个Map
+在这里我们可以看到，这里就是包含我们请求也就是 `Request+Response`
 ![](picture/Pasted%20image%2020260106000817.png)
 
 ok，那我们直接反射获取 `RequestFacade`的那个request属性，就能拿到存放我们请求的对象了。
