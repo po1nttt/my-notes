@@ -108,11 +108,12 @@ Server (整个 Tomcat 服务器)
 	           └── Wrappers (包装器：里面住着具体的 Servlet)⭐
 ```
 
-那我们
+所以，我们简单看一遍就会发现我们想找的地方
+从这里最后一个invoke 开始，就开始进行doFilter的过程了
+![](picture/Pasted%20image%2020260105185911.png)
 
-
-
-
+ok打到这里开始分析
+![](picture/Pasted%20image%2020260105190050.png)
 
 
 
