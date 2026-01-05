@@ -59,7 +59,12 @@ public class SerVlertListener implements ServletRequestListener {
   
     }  
 ```
-我们既然要做内存马所以就必须要获取到发送过来的请求，然后从请求中获取我们要执行的命令然后利用 Runtime 来进行执行，例如：`https://www.xxxx.com/demo?cmd=ls` 这里面 cmd 参数的值，所以我们需要寻找 sre 的一个方法来获取到请求
+我们思考
+- 用户发送 `?cmd=ls` 给服务器。
+- Tomcat 接收到请求，心想：“有个请求进来了，我得通知监听器。”
+- Tomcat 把这个请求打包成一个 `ServletRequestEvent` (即 `sre`)，然后调用`requestInitialized(sre)`。
+
+那我们想办法在
 
 
 
