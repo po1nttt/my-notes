@@ -196,7 +196,10 @@ public boolean fireRequestInitEvent(ServletRequest request) {
 那我们就看看 `getApplicationEventListeners()`怎么个事呗。
 我们发现，我们的Listener应该是存储在 `applicationEventListenersList`里的
 ![](picture/Pasted%20image%2020260106205655.png)
-
+查找调用，可以看到两个有意思的方法
+我们猜测一个是初始set我们的Listener的方法，一个是可以调用然后添加Listener的方法
+![](picture/Pasted%20image%2020260106205907.png)
+那问题就迎刃而解了，我们之前在filter已经拿到StandardContext类了，通过 `addApplicationEventListener()`可以把我们的Listener对象塞进去
 
 
 
