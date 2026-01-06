@@ -52,7 +52,6 @@ public class SerVlertListener implements ServletRequestListener {
 2、 Tomcat 中的 Listener 是如何实现注册的？
 
 ## 恶意代码在哪写？
-### 方法一：在`requestInitialized()`中写
 第一个问题现在我们已经想到一种显而易见的方法
 写在刚刚的`requestInitialized()`里
 ```java
