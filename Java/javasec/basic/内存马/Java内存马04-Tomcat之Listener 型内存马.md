@@ -156,6 +156,43 @@ public class SerVlertListener implements ServletRequestListener {
 fireRequestInitEvent:5982, StandardContext (org.apache.catalina.core)
 ```
 看到这个东西后调用了我们自己的listener
+进去看看这个方法，看到了很多有意思的东西
+```java
+@Override  
+public boolean fireRequestInitEvent(ServletRequest request) {  
+  
+    Object instances[] = getApplicationEventListeners();//去除Listeners对象  
+  
+    if ((instances != null) && (instances.length > 0)) {  
+  
+        ServletRequestEvent event =  
+                new ServletRequestEvent(getServletContext(), request); //创建请求对象 
+		//遍历Listner对象并且初始化....  
+        for (Object instance : instances) {  
+            if (instance == null) {  
+                continue;  
+            }  
+            if (!(instance instanceof ServletRequestListener)) {  
+                continue;  
+            }  
+            ServletRequestListener listener = (ServletRequestListener) instance;  
+  
+            try {  
+                listener.requestInitialized(event);  
+            } catch (Throwable t) {  
+                ExceptionUtils.handleThrowable(t);  
+                getLogger().error(sm.getString(  
+                        "standardContext.requestListener.requestInit",  
+                        instance.getClass().getName()), t);  
+                request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, t);  
+                return false;  
+            }  
+        }  
+    }  
+    return true;  
+}
+```
+完美，我们看到了我们想要的东西，可以看到，他先把 Listeners对象实例取出来放到数组，创建请求对象，然后遍历每个对象，进行安全检查之后执行每一个listener的 `requestInitialized()`进行初始化
 
 
 
