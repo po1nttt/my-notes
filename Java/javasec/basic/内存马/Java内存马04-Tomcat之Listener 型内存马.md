@@ -149,7 +149,9 @@ public class SerVlertListener implements ServletRequestListener {
 ![](picture/Pasted%20image%2020260106004603.png)
 呼~完美。
 ## Tomcat 中的 Listener 是如何实现注册的？
-这里我们想办法找Linstener注册的流程，
+这里我们想办法找Listener注册的流程，
+我们在我们自己的listener中打一个断点，看看调用栈
+![](picture/Pasted%20image%2020260106204605.png)
 
 
 
