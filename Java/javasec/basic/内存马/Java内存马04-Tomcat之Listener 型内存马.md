@@ -193,7 +193,9 @@ public boolean fireRequestInitEvent(ServletRequest request) {
 }
 ```
 完美，我们看到了我们想要的东西，可以看到，他先把 Listeners对象实例取出来放到数组，创建请求对象，然后遍历每个对象，进行安全检查之后执行每一个listener的 `requestInitialized()`进行初始化
-
+那我们就看看 `getApplicationEventListeners()`怎么个事呗。
+我们发现，我们的Listener应该是存储在 `applicationEventListenersList`里的
+![](picture/Pasted%20image%2020260106205655.png)
 
 
 
