@@ -152,7 +152,10 @@ public class SerVlertListener implements ServletRequestListener {
 这里我们想办法找Listener注册的流程，
 我们在我们自己的listener中打一个断点，看看调用栈
 ![](picture/Pasted%20image%2020260106204605.png)
-
+```
+fireRequestInitEvent:5982, StandardContext (org.apache.catalina.core)
+```
+看到这个东西后调用了我们自己的listener
 
 
 
