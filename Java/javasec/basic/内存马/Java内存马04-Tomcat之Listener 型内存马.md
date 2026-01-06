@@ -201,7 +201,21 @@ public boolean fireRequestInitEvent(ServletRequest request) {
 ![](picture/Pasted%20image%2020260106205907.png)
 那问题就迎刃而解了，我们之前在filter已经拿到StandardContext类了，通过 `addApplicationEventListener()`可以把我们的Listener对象塞进去
 
-
+1. 在jsp或者Servlet环境中，用`ServletContext`来获取
+```java
+ServletContext servletContext = request.getSession().getServletContext();//先通过session拿到ServletContext ，本质是ApplicationContextFacade的马甲类 
+  
+  //通过反射访问私有属性context，拿到了ApplicationContext
+ Field appctx = servletContext.getClass().getDeclaredField("context"); 
+ appctx.setAccessible(true);  
+ ApplicationContext applicationContext = (ApplicationContext) appctx.get(servletContext);  
+  
+  //再次反射拿StandardContext
+ Field stdctx = applicationContext.getClass().getDeclaredField("context");  
+ stdctx.setAccessible(true);  
+ StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
+```
+2. 
 
 
 
