@@ -214,7 +214,7 @@ ServletContext servletContext = request.getSession().getServletContext();//先�
  stdctx.setAccessible(true);  
  StandardContext standardContext = (StandardContext) stdctx.get(applicationContext);  
 ```
-2. 
+2. 使用我们恶意listener中获取到的 `RequestFacade`中真正的 `Request`对象
 
 
 
