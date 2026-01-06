@@ -149,9 +149,8 @@ public class SerVlertListener implements ServletRequestListener {
 ![](picture/Pasted%20image%2020260106004603.png)
 呼~完美。
 ## Tomcat 中的 Listener 是如何实现注册的？
-这里我们找Linstener注册的流程和filter类似
-还是使用堆栈图，我们在命令执行之前肯定是注册了的，所以我们断点打 后面一点
-![](picture/Pasted%20image%2020260106184231.png)
+这里我们想办法找Linstener注册的流程，
+
 
 
 
