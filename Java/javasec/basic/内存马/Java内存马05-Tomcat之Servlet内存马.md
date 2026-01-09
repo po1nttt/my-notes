@@ -1,16 +1,31 @@
 # Servlet创建
   我们先来看看servlet接口有什么方法
 ```java
-public interface Servlet {  
-   void init(ServletConfig var1) throws ServletException; // init方法，创建好实例后会被立即调用，仅调用一次。  
-  
-   ServletConfig getServletConfig();//返回一个ServletConfig对象，其中包含这个servlet初始化和启动参数  
-  
-   void service(ServletRequest var1, ServletResponse var2) throws ServletException, IOException;  //每次调用该servlet都会执行service方法，service方法中实现了我们具体想要对请求的处理。  
-  
-   String getServletInfo();//返回有关servlet的信息，如作者、版本和版权.  
-  
-   void destroy();//只会在当前servlet所在的web被卸载的时候执行一次，释放servlet占用的资源  
+public interface Servlet {
+	// 由servlet容器调用，向servlet表明该servlet正在被投入服务。
+	// 在实例化servlet之后，servlet容器正好调用init方法一次。在servlet可以接收任何请求之前，init方法必须成功完成。
+	// 如果init方法出现以下情况，servlet容器就不能将servlet放入服务中
+	// 抛出一个ServletException
+	// 在Web服务器定义的时间段内没有返回
+	public void init(ServletConfig config) throws ServletException;
+
+	// 返回一个ServletConfig对象，其中包含该Servlet的初始化和启动参数。返回的ServletConfig对象是传递给init方法的对象。
+	// 这个接口的实现负责存储ServletConfig对象，以便这个方法能够返回它。实现这个接口的GenericServlet类已经做到了这一点。
+	public ServletConfig getServletConfig();  
+
+	// 由servlet容器调用，允许servlet对请求作出响应。
+	// 这个方法只有在servlet的init()方法成功完成后才会被调用。
+	// 对于抛出或发送错误的servlet，响应的状态代码总是应该被设置。
+	// Servlet通常在多线程的Servlet容器内运行，可以同时处理多个请求。开发人员必须注意同步访问任何共享资源，如文件、网络连接和以及servlet的类和实例变量。关于Java中多线程编程的更多信息，可以在Java多线程编程教程中找到。
+    public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException;
+
+	// 返回有关Servlet的信息，如作者、版本和版权。
+	// 该方法返回的字符串应该是纯文本，而不是任何形式的标记（如HTML、XML等）。
+    public String getServletInfo();
+
+    // 由servlet容器调用，向servlet表明该servlet将被退出服务。只有在servlet的服务方法中的所有线程都退出后，或者在超时期过后，才会调用这个方法。在servlet容器调用该方法后，它将不再调用该servlet的服务方法。
+    // 这个方法给了servlet一个机会来清理任何被保留的资源（例如，内存、文件句柄、线程），并确保任何持久化状态与servlet在内存中的当前状态同步。
+    public void destroy();
 }
 ```
 `service()`应该就是我们要写的那个执行的逻辑，我们的恶意代码应该就是放在这里的。
