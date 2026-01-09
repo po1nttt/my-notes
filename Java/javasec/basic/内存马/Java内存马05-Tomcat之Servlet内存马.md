@@ -84,60 +84,7 @@ Servlet的生命周期分为五部分
 4. 销毁：当Tomcat关闭时或者检测到Servlet要从Tomcat删除的时候会自动调用`destroy()`方法，让该实例释放掉所占的资源。一个Servlet如果长时间不被使用的话，也会被Tomcat自动销毁
 5. 卸载：当Servlet调用完`destroy()`方法后，等待垃圾回收。如果有需要再次使用这个Servlet，会重新调用`init()`方法进行初始化操作
 
-之前我们分析的时候
-在`org.apache.catalina.core.StandardContext`类的`startInternal()`方法中，我们能看到`**Listener->Filter->Servlet**`的加载顺序
-```java
-// Configure and call application event listeners  
-if (ok) {  
-    if (!listenerStart()) {  
-        log.error(sm.getString("standardContext.listenerFail"));  
-        ok = false;  
-    }  
-}  
-  
-// Check constraints for uncovered HTTP methods  
-// Needs to be after SCIs and listeners as they may programmatically  
-// change constraints  
-if (ok) {  
-    checkConstraintsForUncoveredMethods(findConstraints());  
-}  
-  
-try {  
-    // Start manager  
-    Manager manager = getManager();  
-    if (manager instanceof Lifecycle) {  
-        ((Lifecycle) manager).start();  
-    }  
-} catch(Exception e) {  
-    log.error(sm.getString("standardContext.managerFail"), e);  
-    ok = false;  
-}  
-  
-// Configure and call application filters  
-if (ok) {  
-    if (!filterStart()) {  
-        log.error(sm.getString("standardContext.filterFail"));  
-        ok = false;  
-    }  
-}  
-  
-// Load and initialize all "load on startup" servlets  
-if (ok) {  
-    if (!loadOnStartup(findChildren())){  
-        log.error(sm.getString("standardContext.servletFail"));  
-        ok = false;  
-    }  
-}  
-  
-// Start ContainerBackgroundProcessor thread  
-super.threadStart();
-}
-```
-
-
-
-
-
+我个人思路是，不管怎么样，核心一定在 `StanderContext`中，我们类比Filter 和Listener，去核心中找找方法。
 
 
 
