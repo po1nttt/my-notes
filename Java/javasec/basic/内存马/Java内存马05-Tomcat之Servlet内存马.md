@@ -85,7 +85,8 @@ Servlet的生命周期分为五部分
 5. 卸载：当Servlet调用完`destroy()`方法后，等待垃圾回收。如果有需要再次使用这个Servlet，会重新调用`init()`方法进行初始化操作
 
 我个人思路是，不管怎么样，核心一定在 `StanderContext`中，我们类比Filter 和Listener，去核心中找找方法。
-
+可以看到，这里重写了三个 `addServlet`
+![](picture/Pasted%20image%2020260109115516.png)
 
 
 
