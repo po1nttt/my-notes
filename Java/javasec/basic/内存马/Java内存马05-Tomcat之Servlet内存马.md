@@ -155,7 +155,20 @@ Servlet的生命周期分为五部分
 }
 ```
 显而易见，这是核心的实现
-
+可以看到开头，先对传入的`servletName`进行检测，为空时会抛出异常。接着判断`context`的生命周期，如果处于`LifecycleState.STARTING_PREP`状态，同样会抛出异常。
+```java
+if (servletName == null || servletName.equals("")) {  
+    throw new IllegalArgumentException(sm.getString(  
+            "applicationContext.invalidServletName", servletName));  
+}  
+  
+if (!context.getState().equals(LifecycleState.STARTING_PREP)) {  
+    //TODO Spec breaking enhancement to ignore this restriction  
+    throw new IllegalStateException(  
+            sm.getString("applicationContext.addServlet.ise",  
+                    getContextPath()));  
+}
+```
 
 
 
