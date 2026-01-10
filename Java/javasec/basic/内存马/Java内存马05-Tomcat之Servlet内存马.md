@@ -87,6 +87,85 @@ Servlet的生命周期分为五部分
 我个人思路是，不管怎么样，核心一定在 `StanderContext`中，我们类比Filter 和Listener，去核心中找找方法。
 可以看到，这里重写了三个 `addServlet`
 ![](picture/Pasted%20image%2020260109115516.png)
+发现这里不是核心逻辑，我们找接口的实现方法
+
+发现三个 `addServlet`最后都走向了一个私有的 `addServivce` 方法
+![](picture/Pasted%20image%2020260110154510.png)
+```java
+ private ServletRegistration.Dynamic addServlet(String servletName, String servletClass,  
+        Servlet servlet, Map<String,String> initParams) throws IllegalStateException {  
+  
+    if (servletName == null || servletName.equals("")) {  
+        throw new IllegalArgumentException(sm.getString(  
+                "applicationContext.invalidServletName", servletName));  
+    }  
+  
+    if (!context.getState().equals(LifecycleState.STARTING_PREP)) {  
+        //TODO Spec breaking enhancement to ignore this restriction  
+        throw new IllegalStateException(  
+                sm.getString("applicationContext.addServlet.ise",  
+                        getContextPath()));  
+    }  
+  
+    Wrapper wrapper = (Wrapper) context.findChild(servletName);  
+  
+    // Assume a 'complete' ServletRegistration is one that has a class and  
+    // a name    if (wrapper == null) {  
+        wrapper = context.createWrapper();  
+        wrapper.setName(servletName);  
+        context.addChild(wrapper);  
+    } else {  
+        if (wrapper.getName() != null &&  
+                wrapper.getServletClass() != null) {  
+            if (wrapper.isOverridable()) {  
+                wrapper.setOverridable(false);  
+            } else {  
+                return null;  
+            }  
+        }  
+    }  
+  
+    ServletSecurity annotation = null;  
+    if (servlet == null) {  
+        wrapper.setServletClass(servletClass);  
+        Class<?> clazz = Introspection.loadClass(context, servletClass);  
+        if (clazz != null) {  
+            annotation = clazz.getAnnotation(ServletSecurity.class);  
+        }  
+    } else {  
+        wrapper.setServletClass(servlet.getClass().getName());  
+        wrapper.setServlet(servlet);  
+        if (context.wasCreatedDynamicServlet(servlet)) {  
+            annotation = servlet.getClass().getAnnotation(ServletSecurity.class);  
+        }  
+    }  
+  
+    if (initParams != null) {  
+        for (Map.Entry<String, String> initParam: initParams.entrySet()) {  
+            wrapper.addInitParameter(initParam.getKey(), initParam.getValue());  
+        }  
+    }  
+  
+    ServletRegistration.Dynamic registration =  
+            new ApplicationServletRegistration(wrapper, context);  
+    if (annotation != null) {  
+        registration.setServletSecurity(new ServletSecurityElement(annotation));  
+    }  
+    return registration;  
+}
+```
+显而易见，这是核心的实现
+
+
+
+
+
+
+
+
+
+
+
 
 
 
