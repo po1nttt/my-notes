@@ -169,7 +169,10 @@ if (!context.getState().equals(LifecycleState.STARTING_PREP)) {
                     getContextPath()));  
 }
 ```
+接着通过`servletName`从`context`中寻找相关联的子容器，并将其转换成`Wrapper`对象，当不存在时，会创建一个名字为`servletName`的`wrapper`，再将创建的`wrapper`添加到`context`的子容器中。最后判断`servlet`是否为`null`，当`servlet == null`时，会将传入的`servletClass`设置进`wrapper`中。最后调用
 
+`org.apache.catalina.core.StandardContext#dynamicServletAdded`方法进行`servlet`动态加载。
+![](picture/Pasted%20image%2020260110155438.png)
 
 
 
