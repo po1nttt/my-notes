@@ -57,7 +57,19 @@ java -javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar" Hello
 `com.sun.tools.attach.VirtualMachine`类可以实现获取JVM信息，内存dump、现成dump、类信息统计（例如JVM加载的类）等功能。
 
 该类允许我们通过给attach方法传入一个JVM的PID，来远程连接到该JVM上 ，之后我们就可以对连接的JVM进行各种操作，如注入Agent。下面是该类的主要方法
-
+```java
+//允许我们传入一个JVM的PID，然后远程连接到该JVM上
+VirtualMachine.attach()
+ 
+//向JVM注册一个代理程序agent，在该agent的代理程序中会得到一个Instrumentation实例，该实例可以 在class加载前改变class的字节码，也可以在class加载后重新加载。在调用Instrumentation实例的方法时，这些方法会使用ClassFileTransformer接口中提供的方法进行处理
+VirtualMachine.loadAgent()
+ 
+//获得当前所有的JVM列表
+VirtualMachine.list()
+ 
+//解除与特定JVM的连接
+VirtualMachine.detach()
+```
 
 
 
