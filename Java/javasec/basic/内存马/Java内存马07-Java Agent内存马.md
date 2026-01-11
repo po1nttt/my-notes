@@ -71,11 +71,75 @@ VirtualMachine.list()
 VirtualMachine.detach()
 ```
 
+### VirtualMachineDescriptor类
 
+`com.sun.tools.attach.VirtualMachineDescriptor`类是一个用来描述特定虚拟机的类，其方法可以获取虚拟机的各种信息如PID、虚拟机名称等。下面是一个获取特定虚拟机PID的示例
+```java
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+ 
+import java.util.List;
+ 
+public class get_PID {
+    public static void main(String[] args) {
+        
+        //调用VirtualMachine.list()获取正在运行的JVM列表
+        List<VirtualMachineDescriptor> list = VirtualMachine.list();
+        for(VirtualMachineDescriptor vmd : list){
+            
+            //遍历每一个正在运行的JVM，如果JVM名称为get_PID则返回其PID
+            if(vmd.displayName().equals("get_PID"))
+            System.out.println(vmd.id());
+        }
+ 
+    }
+}
+ 
+ 
+##
+4908
+ 
+Process finished with exit code 0
+```
+下面我们就来实现一个`agentmain-Agent`。首先我们编写一个Sleep_Hello类，模拟正在运行的JVM
+```java
+import static java.lang.Thread.sleep;
+ 
+public class Sleep_Hello {
+    public static void main(String[] args) throws InterruptedException {
+        while (true){
+            System.out.println("Hello World!");
+            sleep(5000);
+        }
+    }
+}
+```
+然后编写我们的agentmain-Agent类
+```java
+package com.java.agentmain.agent;
+ 
+import java.lang.instrument.Instrumentation;
+ 
+import static java.lang.Thread.sleep;
+ 
+public class Java_Agent_agentmain {
+    public static void agentmain(String args, Instrumentation inst) throws InterruptedException {
+        while (true){
+            System.out.println("调用了agentmain-Agent!");
+            sleep(3000);
+        }
+    }
+}
+```
+同时配置MANIFEST.MF文件
+```
+Manifest-Version: 1.0
+Agent-Class: com.java.agentmain.agent.Java_Agent_agentmain
+ 
+```
+编译打包成jar文件`out/artifacts/Java_Agent_jar/Java_Agent.jar`
 
-
-
-
+最后编写一个`Inject_Agent`类，获取特定JVM的PID并注入Agent
 
 
 
