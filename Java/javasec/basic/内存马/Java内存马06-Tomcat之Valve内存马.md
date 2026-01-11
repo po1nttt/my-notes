@@ -86,11 +86,47 @@ public void service(org.apache.coyote.Request req, org.apache.coyote.Response re
 ...
 }
 ```
+前面是对Request和Respone对象进行一些判断及创建操作，我们重点来看一下`connector.getService().getContainer().getPipeline().getFirst().invoke(request, response)`
 
+首先通过`connector.getService()`来获取一个StandardService对象
 
+接着通过`StandardService`.`getContainer().getPipeline()`获取`StandardPipeline`对象。
 
-
-
+再通过`StandardPipeline.getFirst()`获取第一个Valve
+```java
+@Override
+    public Valve getFirst() {
+        if (first != null) {
+            return first;
+        }
+ 
+        return basic;
+    }
+```
+最后通过调用`StandardEngineValve.invoke()`来实现Valve的各种业务逻辑
+```java
+public final void invoke(Request request, Response response)
+        throws IOException, ServletException {
+ 
+        // Select the Host to be used for this Request
+        Host host = request.getHost();
+        if (host == null) {
+            // HTTP 0.9 or HTTP 1.0 request without a host when no default host
+            // is defined.
+            // Don't overwrite an existing error
+            if (!response.isError()) {
+                response.sendError(404);
+            }
+            return;
+        }
+        if (request.isAsyncSupported()) {
+            request.setAsyncSupported(host.getPipeline().isAsyncSupported());
+        }
+ 
+        // Ask this Host to process this request
+        host.getPipeline().getFirst().invoke(request, response);
+    }
+```
 
 
 
