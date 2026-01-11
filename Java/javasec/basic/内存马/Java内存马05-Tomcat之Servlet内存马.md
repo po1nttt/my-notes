@@ -173,6 +173,18 @@ if (!context.getState().equals(LifecycleState.STARTING_PREP)) {
 
 `org.apache.catalina.core.StandardContext#dynamicServletAdded`方法进行`servlet`动态加载。
 ![](picture/Pasted%20image%2020260110155438.png)
+在`StandardContext`#`startInternal`中，调用了`fireLifecycleEvent()`方法解析web.xml文件，我们跟进
+```java
+protected void fireLifecycleEvent(String type, Object data) {
+        LifecycleEvent event = new LifecycleEvent(this, type, data);
+        for (LifecycleListener listener : lifecycleListeners) {
+            listener.lifecycleEvent(event);
+        }
+    }
+```
+最终通过`ContextConfig#webConfig()`方法解析web.xml获取各种配置参数
+
+
 
 # 实现
 
