@@ -45,9 +45,18 @@ public class Hello {
 ```
 台南佳JVM Oprions(注意冒号之后不能有空格)
 ```bash
-java Hello -javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar"
+java -javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar" Hello
 ```
+运行如下
+![](picture/Pasted%20image%2020260111233306.png)
+## agentmain-Agent
 
+相较于premain-Agent只能在JVM启动前加载，agentmain-Agent能够在JVM启动之后加载并实现相应的修改字节码功能。下面我们来了解一下和JVM有关的两个类。
+
+### VirtualMachine类
+`com.sun.tools.attach.VirtualMachine`类可以实现获取JVM信息，内存dump、现成dump、类信息统计（例如JVM加载的类）等功能。
+
+该类允许我们通过给attach方法传入一个JVM的PID，来远程连接到该JVM上 ，之后我们就可以对连接的JVM进行各种操作，如注入Agent。下面是该类的主要方法
 
 
 
