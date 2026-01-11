@@ -636,7 +636,17 @@ public class Inject_Agent {
 }
 ```
 ## Instrumentation的局限性
+大多数情况下，我们使用Instrumentation都是使用其字节码插桩的功能，简单来说就是类重定义功能（Class Redefine），但是有以下局限性：
 
+premain和agentmain两种方式**修改字节码**的时机都是类文件加载之后，也就是说必须要带有Class类型的参数，不能通过字节码文件和自定义的类名重新定义一个本来不存在的类。
+
+类的字节码修改称为类转换(Class Transform)，类转换其实最终都回归到类重定义I`nstrumentation#redefineClasses`方法，此方法有以下限制：
+
+1. 新类和老类的父类必须相同
+2. 新类和老类实现的接口数也要相同，并且是相同的接口
+3. 新类和老类访问符必须一致。 新类和老类字段数和字段名要一致
+4. 新类和老类新增或删除的方法必须是private static/final修饰的
+5. 可以修改方法体
 
 
 
