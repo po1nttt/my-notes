@@ -224,7 +224,28 @@ public class Java_Agent_agentmain_Instrumentation {
     }
 }
 ```
-
+注入目标进程，结果如下
+```
+Hello World!
+Hello World!
+------------------------------------------
+加载类: com.java.agentmain.instrumentation.Java_Agent_agentmain_Instrumentation
+是否可被修改: true
+------------------------------------------
+加载类: Sleep_Hello
+是否可被修改: true
+------------------------------------------
+加载类: com.intellij.rt.execution.application.AppMainV2$1
+是否可被修改: true
+------------------------------------------
+加载类: com.intellij.rt.execution.application.AppMainV2
+是否可被修改: true
+------------------------------------------
+加载类: com.intellij.rt.execution.application.AppMainV2$Agent
+是否可被修改: true
+ 
+...
+```
 
 
 
