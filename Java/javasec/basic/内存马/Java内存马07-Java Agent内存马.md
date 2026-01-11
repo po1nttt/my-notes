@@ -175,7 +175,55 @@ public class Inject_Agent {
 ![](picture/Pasted%20image%2020260111234434.png)
 ##  Instrumentation
 Instrumentation是 JVMTIAgent（JVM Tool Interface Agent）的一部分，Java agent通过这个类和目标 JVM 进行交互，从而达到修改数据的效果。
-
+```java
+public interface Instrumentation {
+    
+    //增加一个Class 文件的转换器，转换器用于改变 Class 二进制流的数据，参数 canRetransform 设置是否允许重新转换。
+    void addTransformer(ClassFileTransformer transformer, boolean canRetransform);
+ 
+    //在类加载之前，重新定义 Class 文件，ClassDefinition 表示对一个类新的定义，如果在类加载之后，需要使用 retransformClasses 方法重新定义。addTransformer方法配置之后，后续的类加载都会被Transformer拦截。对于已经加载过的类，可以执行retransformClasses来重新触发这个Transformer的拦截。类加载的字节码被修改后，除非再次被retransform，否则不会恢复。
+    void addTransformer(ClassFileTransformer transformer);
+ 
+    //删除一个类转换器
+    boolean removeTransformer(ClassFileTransformer transformer);
+ 
+ 
+    //在类加载之后，重新定义 Class。这个很重要，该方法是1.6 之后加入的，事实上，该方法是 update 了一个类。
+    void retransformClasses(Class<?>... classes) throws UnmodifiableClassException;
+ 
+ 
+ 
+    //判断一个类是否被修改
+    boolean isModifiableClass(Class<?> theClass);
+ 
+    // 获取目标已经加载的类。
+    @SuppressWarnings("rawtypes")
+    Class[] getAllLoadedClasses();
+ 
+    //获取一个对象的大小
+    long getObjectSize(Object objectToSize);
+ 
+}
+```
+#### 获取目标JVM已加载类
+下面我们简单实现一个能够获取目标JVM已加载类的`agentmain-Agent`
+```java
+package com.java.agentmain.instrumentation;
+ 
+import java.lang.instrument.Instrumentation;
+ 
+public class Java_Agent_agentmain_Instrumentation {
+    public static void agentmain(String args, Instrumentation inst) throws InterruptedException {
+        Class [] classes = inst.getAllLoadedClasses();
+ 
+        for(Class cls : classes){
+            System.out.println("------------------------------------------");
+            System.out.println("加载类: "+cls.getName());
+            System.out.println("是否可被修改: "+inst.isModifiableClass(cls));
+        }
+    }
+}
+```
 
 
 
