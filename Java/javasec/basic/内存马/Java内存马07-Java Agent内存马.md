@@ -45,7 +45,7 @@ public class Hello {
 ```
 台南佳JVM Oprions(注意冒号之后不能有空格)
 ```bash
--javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar"
+java Hello -javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar"
 ```
 
 
