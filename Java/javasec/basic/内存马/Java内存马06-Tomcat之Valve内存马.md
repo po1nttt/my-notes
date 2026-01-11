@@ -127,7 +127,9 @@ public final void invoke(Request request, Response response)
         host.getPipeline().getFirst().invoke(request, response);
     }
 ```
-
+`host.getPipeline().getFirst().invoke(request, response)`实现调用后续的Valve。
+# 动态台添加Valve
+所以我们的思路如下
 
 
 
