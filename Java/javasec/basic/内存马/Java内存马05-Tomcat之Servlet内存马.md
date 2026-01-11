@@ -378,8 +378,8 @@ protected void fireLifecycleEvent(String type, Object data) {
     standardContext.addServletMappingDecoded("/shell",name);
 %>
 ```
-
-
+这里我们得访问对应注册的路径，进行命令执行
+这里注册路由是/shell
 
 
 
