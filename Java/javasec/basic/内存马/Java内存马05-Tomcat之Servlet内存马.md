@@ -290,7 +290,7 @@ protected void fireLifecycleEvent(String type, Object data) {
 5. `addChild`添加`wrapper`到`Context`；
 6. `addServletMapping`添加映射。
 
-
+还是和之前一样，拿到StandardContext
 
 
 
