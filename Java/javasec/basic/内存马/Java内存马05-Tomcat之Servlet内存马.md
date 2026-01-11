@@ -174,9 +174,16 @@ if (!context.getState().equals(LifecycleState.STARTING_PREP)) {
 `org.apache.catalina.core.StandardContext#dynamicServletAdded`方法进行`servlet`动态加载。
 ![](picture/Pasted%20image%2020260110155438.png)
 
+# 实现
 
+动态注入`Servlet`内存马的具体思路如下:
 
-
+1. 调用`StandardContext.createWrapper`为`servlet`创建`wrapper`；
+2. 设置`StandardWrapper`对象的`LoadOnStartup`启动优先级；
+3. 设置`StandardWrapper`对象的`ServletName`；
+4. 设置`StandardWrapper`对象的`ServletClass`；
+5. `addChild`添加`wrapper`到`Context`；
+6. `addServletMapping`添加映射。
 
 
 
