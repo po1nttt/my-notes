@@ -255,9 +255,37 @@ Hello World!
 ```
 `ClassFileTransformer`接口中只有一个`transform()`方法，返回值为字节数组，作为转换后的字节码注入到目标JVM中。
 ```java
-
+public interface ClassFileTransformer {
+ 
+    /**
+     * 类文件转换方法，重写transform方法可获取到待加载的类相关信息
+     *
+     * @param loader              定义要转换的类加载器；如果是引导加载器如Bootstrap ClassLoader，则为 null
+     * @param className           完全限定类内部形式的类名称,格式如:java/lang/Runtime
+     * @param classBeingRedefined 如果是被重定义或重转换触发，则为重定义或重转换的类；如果是类加载，则为 null
+     * @param protectionDomain    要定义或重定义的类的保护域
+     * @param classfileBuffer     类文件格式的输入字节缓冲区（不得修改）
+     * @return 返回一个通过ASM修改后添加了防御代码的字节码byte数组。
+     */
+    
+    byte[] transform(  ClassLoader         loader,
+                String              className,
+                Class<?>            classBeingRedefined,
+                ProtectionDomain    protectionDomain,
+                byte[]              classfileBuffer)
+        throws IllegalClassFormatException;
+}
 ```
+在通过 `addTransformer` 注册一个transformer后，每次定义或者重定义新类都会调用transformer。所谓定义，即是通过`ClassLoader.defineClass`加载进来的类。而重定义是通过`Instrumentation.redefineClasses`方法重定义的类。
 
+当存在多个转换器时，转换将由 `transform` 调用链组成。 也就是说，一个 `transform` 调用返回的 byte 数组将成为下一个调用的输入（通过 `classfileBuffer` 参数）。
+
+转换将按以下顺序应用：
+
+- 不可重转换转换器
+- 不可重转换本机转换器
+- 可重转换转换器
+- 可重转换本机转换器
 
 
 
