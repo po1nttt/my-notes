@@ -140,10 +140,41 @@ Agent-Class: com.java.agentmain.agent.Java_Agent_agentmain
 编译打包成jar文件`out/artifacts/Java_Agent_jar/Java_Agent.jar`
 
 最后编写一个`Inject_Agent`类，获取特定JVM的PID并注入Agent
-
-
-
-
+```java
+package com.java.inject;
+ 
+import com.sun.tools.attach.*;
+ 
+import java.io.IOException;
+import java.util.List;
+ 
+public class Inject_Agent {
+    public static void main(String[] args) throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
+        //调用VirtualMachine.list()获取正在运行的JVM列表
+        List<VirtualMachineDescriptor> list = VirtualMachine.list();
+        for(VirtualMachineDescriptor vmd : list){
+ 
+            //遍历每一个正在运行的JVM，如果JVM名称为Sleep_Hello则连接该JVM并加载特定Agent
+            if(vmd.displayName().equals("Sleep_Hello")){
+ 
+                //连接指定JVM
+                VirtualMachine virtualMachine = VirtualMachine.attach(vmd.id());
+                //加载Agent
+                virtualMachine.loadAgent("out/artifacts/Java_Agent_jar/Java_Agent.jar");
+                //断开JVM连接
+                virtualMachine.detach();
+            }
+ 
+        }
+    }
+}
+```
+首先启动`Sleep_Hello`目标JVM
+![](picture/Pasted%20image%2020260111234416.png)
+然后运行`Inject_Agent`类，注入Agent
+![](picture/Pasted%20image%2020260111234434.png)
+##  Instrumentation
+Instrumentation是 JVMTIAgent（JVM Tool Interface Agent）的一部分，Java agent通过这个类和目标 JVM 进行交互，从而达到修改数据的效果。
 
 
 
