@@ -246,10 +246,17 @@ Hello World!
  
 ...
 ```
+#### transform 
 
+在Instrumentation接口中，我们可以通过`addTransformer()`来添加一个`transformer`（转换器），关键属性就是`ClassFileTransformer`类。
+```java
+//增加一个Class 文件的转换器，转换器用于改变 Class 二进制流的数据，参数 canRetransform 设置是否允许重新转换。
+    void addTransformer(ClassFileTransformer transformer, boolean canRetransform);
+```
+`ClassFileTransformer`接口中只有一个`transform()`方法，返回值为字节数组，作为转换后的字节码注入到目标JVM中。
+```java
 
-
-
+```
 
 
 
