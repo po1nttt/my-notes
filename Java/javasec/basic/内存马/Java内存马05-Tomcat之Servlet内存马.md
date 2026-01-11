@@ -183,8 +183,101 @@ protected void fireLifecycleEvent(String type, Object data) {
     }
 ```
 最终通过`ContextConfig#webConfig()`方法解析web.xml获取各种配置参数
+![](picture/Pasted%20image%2020260111221515.png)
+然后通过`configureContext(webXml)`方法创建StandWrapper对象，**并根据解析参数初始化StandWrapper对象**
+```java
+ private void configureContext(WebXml webxml) {
+        // As far as possible, process in alphabetical order so it is easy to
+        // check everything is present
+        // Some validation depends on correct public ID
+        context.setPublicId(webxml.getPublicId());
+ 
+...   //设置StandardContext参数
+ 
+        
+        for (ServletDef servlet : webxml.getServlets().values()) {
+ 
+            //创建StandardWrapper对象
+            Wrapper wrapper = context.createWrapper();
+ 
+            if (servlet.getLoadOnStartup() != null) {
+ 
+                //设置LoadOnStartup属性
+                wrapper.setLoadOnStartup(servlet.getLoadOnStartup().intValue());
+            }
+            if (servlet.getEnabled() != null) {
+                wrapper.setEnabled(servlet.getEnabled().booleanValue());
+            }
+ 
+            //设置ServletName属性
+            wrapper.setName(servlet.getServletName());
+            Map<String,String> params = servlet.getParameterMap();
+            for (Entry<String, String> entry : params.entrySet()) {
+                wrapper.addInitParameter(entry.getKey(), entry.getValue());
+            }
+            wrapper.setRunAs(servlet.getRunAs());
+            Set<SecurityRoleRef> roleRefs = servlet.getSecurityRoleRefs();
+            for (SecurityRoleRef roleRef : roleRefs) {
+                wrapper.addSecurityReference(
+                        roleRef.getName(), roleRef.getLink());
+            }
+ 
+            //设置ServletClass属性
+            wrapper.setServletClass(servlet.getServletClass());
+            ...
+            wrapper.setOverridable(servlet.isOverridable());
+ 
+            //将包装好的StandWrapper添加进ContainerBase的children属性中
+            context.addChild(wrapper);
+ 
+           for (Entry<String, String> entry :
+                webxml.getServletMappings().entrySet()) {
+          
+            //添加路径映射
+            context.addServletMappingDecoded(entry.getKey(), entry.getValue());
+        }
+        }
+        ...
+    }
+```
+最后通过`addServletMappingDecoded()`方法添加Servlet对应的url映射
 
+接着在`StandardContext#startInternal`方法通过`findChildren()`获取`StandardWrapper`类
+最后依次加载完Listener、Filter后，就通过`loadOnStartUp()`方法加载wrapper
+```java
+    public boolean loadOnStartup(Container children[]) {
+ 
+        // Collect "load on startup" servlets that need to be initialized
+        TreeMap<Integer, ArrayList<Wrapper>> map = new TreeMap<>();
+        for (Container child : children) {
+            Wrapper wrapper = (Wrapper) child;
+            int loadOnStartup = wrapper.getLoadOnStartup();
+ 
+            //判断属性loadOnStartup的值
+            if (loadOnStartup < 0) {
+                continue;
+            }
+            Integer key = Integer.valueOf(loadOnStartup);
+            ArrayList<Wrapper> list = map.get(key);
+            if (list == null) {
+                list = new ArrayList<>();
+                map.put(key, list);
+            }
+            list.add(wrapper);
+        }
+ 
+        // Load the collected "load on startup" servlets
+        for (ArrayList<Wrapper> list : map.values()) {
+            for (Wrapper wrapper : list) {
+                try {
+                    wrapper.load();
+                }
+```
+注意这里对于Wrapper对象中`loadOnStartup`属性的值进行判断，只有大于0的才会被放入list进行后续的`wrapper.load()`加载调用。
 
+这里对应的实际上就是Tomcat Servlet的懒加载机制，可以通过`loadOnStartup`属性值来设置每个Servlet的启动顺序。默认值为-1，此时只有当Servlet被调用时才加载到内存中。
+
+至此Servlet才被加载到内存中。
 
 # 实现
 
