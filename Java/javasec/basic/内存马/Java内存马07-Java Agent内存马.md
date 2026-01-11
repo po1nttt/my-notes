@@ -33,9 +33,20 @@ public class Java_Agent_premain {
 Manifest-Version: 1.0
 Premain-Class: com.java.premain.agent.Java_Agent_premain
 ```
+将其打包成jar文件
 
-
-
+卷构建一个目标类
+```java
+public class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
+    }
+}
+```
+台南佳JVM Oprions(注意冒号之后不能有空格)
+```bash
+-javaagent:"out/artifacts/Java_Agent_jar/Java_Agent.jar"
+```
 
 
 
