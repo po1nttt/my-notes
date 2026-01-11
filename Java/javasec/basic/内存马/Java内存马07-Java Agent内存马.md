@@ -14,6 +14,25 @@
 # 几种Java Agent实例
 
 ## Premain-Agent
+我们首先来实现一个简单的`premain-Agent`，创建一个Maven项目，编写一个简单的premain-Agent
+```java
+package com.java.premain.agent;
+ 
+import java.lang.instrument.Instrumentation;
+ 
+public class Java_Agent_premain {
+    public static void premain(String args, Instrumentation inst) {
+        for (int i =0 ; i<10 ; i++){
+            System.out.println("调用了premain-Agent！");
+        }
+    }
+}
+```
+接着在`resource/META-INF/`下创建`MANIFEST.MF`清单文件用以指定`premain-Agent`的启动类
+```
+Manifest-Version: 1.0
+Premain-Class: com.java.premain.agent.Java_Agent_premain
+```
 
 
 
